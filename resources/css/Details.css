@@ -1,0 +1,31 @@
+.product__options {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+}
+
+.product__option {
+    padding: 20px;
+    border: 1px solid gray;
+    border-radius: 1rem;
+    color: black;
+    font-weight: bolder;
+    cursor: pointer;
+}
+
+.product__option {
+    padding: 10px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.product__option:hover {
+    background-color: #f0f0f0;
+}
+
+.product__option.active {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #0056b3;
+}

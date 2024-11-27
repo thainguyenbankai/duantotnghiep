@@ -1,5 +1,7 @@
 @extends('admin.main_admin')
+
 @section('title', 'Trang chủ')
+
 @section('content')
 <!-- Bảng -->
 <div class="mt-8">
@@ -24,27 +26,21 @@
                     <td class="px-6 py-4 border-b border-gray-200">{{ $user->created_at->format('d / m / Y') }}</td>
                     <td class="px-6 py-4 border-b border-gray-200">{{ $user->status }}</td>
                     <td class="px-6 py-4 border-b border-gray-200">
-                        {{-- <form method="POST" action="{{ route('users.updateStatus', $user->id) }}"> --}}
+                        <form method="POST" action="{{ route('admin.users.updateStatus', $user->id) }}">
                             @csrf
                             @method('PATCH')
-                            <select class="text-red-500 focus:outline-none" name="keyy" onchange="this.form.submit()">
-                                <option value="0" {{ $user->keyy == 'show' ? 'selected' : '' }}>Mở</option>
-                                <option value="1" {{ $user->keyy == 'hidden' ? 'selected' : '' }}>Khóa</option>
-
-
+                            <select class="focus:outline-none" name="keyy" onchange="this.form.submit()">
+                                <option value="active" {{ $user->keyy == 'active' ? 'selected' : '' }}>Mở</option>
+                                <option value="inactive" {{ $user->keyy == 'inactive' ? 'selected' : '' }}>Khóa</option>
                             </select>
                         </form>
                     </td>
-                    
                 </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
 </div>
-<br>
-<br>
-<br>
-<br>
-@endsection
 
+<br><br><br><br>
+@endsection

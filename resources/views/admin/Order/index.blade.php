@@ -1,4 +1,5 @@
 @extends('admin.main_admin')
+
 @section('title', 'Danh sách đơn hàng')
 
 @section('content')
@@ -8,44 +9,63 @@
         <table class="min-w-full bg-white border border-gray-200 rounded-lg">
             <thead class="bg-gray-100">
                 <tr>
-                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">STT</th>
-
+                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Mã đơn hàng</th>
                     <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tên sản phẩm</th>
-                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Hình ảnh</th>
                     <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Giá</th>
                     <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Số lượng</th>
                     <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Trạng thái</th>
                     <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ngày đặt hàng</th>
-                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Hành động</th>
+                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Số điện thoại</th>
+                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Phương thức thanh toán</th>
                 </tr>
             </thead>
             <tbody class="text-sm font-medium text-gray-700">
-               
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 border-b border-gray-200">3</td>
-                    <td class="px-6 py-4 border-b border-gray-200">Sản phẩm </td>
-                    <td class="px-6 py-4 border-b border-gray-200">
-                        <img src="" alt="image_pr" class="w-16 h-16 object-cover">
-                    </td>
-                    <td class="px-6 py-4 border-b border-gray-200">150,00 VNĐ</td>
-                    <td class="px-6 py-4 border-b border-gray-200">5</td>
-                    <td class="px-6 py-4 border-b border-gray-200">
-                        <select class="form-select mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                            <option value="2">Đang xử lý</option>
-                            <option value="1">Đang Giao</option>
-                            <option value="0">Hoàn thành</option>
-                        </select>
-                    </td>
-                    <td class="px-6 py-4 border-b border-gray-200">03/01/2024</td>
-                    <td class="px-6 py-4 border-b border-gray-200">
-                        <a href="#" class="text-blue-500 hover:underline">Xem chi tiết</a>
-                        {{-- <form action="#" method="POST" class="inline ml-4">
-                            <button type="submit" class="text-red-500 hover:underline">Xóa</button>
-                        </form> --}}
-                    </td>
-                </tr>
+                @foreach($orders as $order)
+                    @php
+                        $products = json_decode($order->products);  // Decode the products JSON
+                    @endphp
+                    
+                    @foreach($products as $product)
+                        <tr class="hover:bg-gray-50">
+                            <!-- Display order row number -->
+                            <td class="px-6 py-4 border-b border-gray-200">{{ $loop->parent->iteration }}</td>
+
+                            <!-- Display product name -->
+                            <td class="px-6 py-4 border-b border-gray-200">{{ $product->name }}</td>
+
+                            <!-- Display product price -->
+                            <td class="px-6 py-4 border-b border-gray-200">{{ number_format($product->price, 2) }} VNĐ</td>
+
+                            <!-- Display product quantity -->
+                            <td class="px-6 py-4 border-b border-gray-200">{{ $product->quantity }}</td>
+
+                            <!-- Display order status -->
+                            <td class="px-6 py-4 border-b border-gray-200">
+                                <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <select name="status_id" class="status-select form-select mt-1 block w-full border-gray-300 rounded-md shadow-sm"  onchange="this.form.submit()">
+                                        @foreach($statuses as $status)
+                                            <option value="{{ $status->id }}" {{ $order->status_id == $status->id ? 'selected' : '' }}>
+                                                {{ $status->name }}
+                                            </option>
+                                        @endforeach 
+                                    </select>
+                                    <input type="hidden" name="order_id" value="{{ $order->id }}">
+                                </form>
+                            </td>
+
+                            <!-- Display the order creation date -->
+                            <td class="px-6 py-4 border-b border-gray-200">{{ $order->created_at->format('d/m/Y') }}</td>
+                            <td class="px-6 py-4 border-b border-gray-200">{{ $order->phone }}</td>
+                            <td class="px-6 py-4 border-b border-gray-200">{{ $order->payment_method }}</td>
+                        </tr>
+                    @endforeach
+                    
+                @endforeach
             </tbody>
         </table>
     </div>
-</div>
+</div>  
+
 @endsection

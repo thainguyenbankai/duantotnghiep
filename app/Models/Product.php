@@ -2,13 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Reviews;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Product extends Model
 {
-    use HasFactory;
+
+    use HasFactory, SoftDeletes;
+
     protected $table = 'products';
+
     protected $fillable = [
         'name',
         'description',
@@ -19,12 +25,12 @@ class Product extends Model
         'status_id',
         'type_id',
         'discount_id',
-        'supplier_id',
         'category_id',
-        'user_id'
+        'user_id',
+        'options_id',
+        'colors_id',
     ];
 
-    // Các thuộc tính quan hệ với các bảng khác (nếu có)
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -34,7 +40,6 @@ class Product extends Model
     {
         return $this->belongsTo(Brand::class);
     }
-
 
     public function type()
     {
@@ -46,13 +51,24 @@ class Product extends Model
         return $this->belongsTo(Discount::class);
     }
 
-    public function supplier()
-    {
-        return $this->belongsTo(Supplier::class);
-    }
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
+
+    public function variants()
+    {
+        return $this->hasMany(ProductOptions::class);
+    }
+    public function options()
+    {
+        return $this->belongsTo(Options::class);
+    }
+    public function reviews()
+    {
+        return $this->hasMany(Reviews::class);
+    }
+    public function ratings() { return $this->hasMany(Reviews::class);
+}
 }

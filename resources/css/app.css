@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+.header__navbar {
+    background-color: lightgray;
+}
+
+html,
+body {
+    background-color: #f4f4f4;
+}

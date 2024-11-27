@@ -16,10 +16,12 @@ class OrderItem extends Model
         'price',
     ];
 
-    public function order()
+
+    public function orderUser()
     {
-        return $this->belongsTo(Order::class);
+        return $this->belongsTo(OrderUser::class, 'id');
     }
+
 
     public function product()
     {

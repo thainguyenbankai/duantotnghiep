@@ -1,0 +1,77 @@
+
+.cate__gory {
+    position: absolute;
+    top: 100%;
+    left: 80px;
+    z-index: 10;
+    background-color: #2d3748;
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 0.5rem 0;
+    min-width: 200px;
+}
+
+.cate__gory a {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: #fff;
+    text-decoration: none;
+    /* Bỏ gạch cân */
+}
+
+.cate__gory a:hover {
+    background-color: #4a5568;
+    /* Màu nền khi hover */
+}
+
+img,
+video {
+    width: 180px;
+}
+.MuiDialog-paper {
+    width: 700px; 
+    max-width: 100%; 
+  }
+  .MuiDialogContent-root {
+    display: flex;
+    flex-direction: column; /* Chuyển hướng thành cột (mặc định của flex) */
+    gap: 20px; /* Khoảng cách giữa các phần tử */
+  }
+  .MuiDialogContent-root > div {
+    display: flex;
+    justify-content: space-between; /* Căn chỉnh các phần tử con theo chiều ngang */
+    align-items: center; /* Căn chỉnh các phần tử con theo chiều dọc */
+  }
+  .MuiTypography-root {
+    flex: 1; /* Cho phép đoạn văn bản chiếm không gian còn lại */
+  }
+  
+  .MuiButtonBase-root {
+    margin-left: 10px; /* Thêm khoảng cách giữa nút và văn bản */
+  }
+  .MuiDialogTitle-root {
+    display: flex;
+    justify-content: center; /* Căn chỉnh nội dung theo chiều ngang */
+    align-items: center; /* Căn chỉnh theo chiều dọc */
+  }
+  /* Hover effect cho div chứa từng địa chỉ */
+.MuiDialogContent-root > div:hover {
+    background-color: #f5f5f5;  /* Thay đổi màu nền của cả phần tử khi hover */
+    border-radius: 8px;         /* Thêm bo tròn cho các góc */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);  /* Thêm bóng đổ */
+    transition: all 0.3s ease;  /* Hiệu ứng chuyển đổi mượt */
+    padding: 20px;
+  }
+  
+  /* Hover effect cho button trong từng phần tử */
+  .MuiButton-root:hover {
+    background-color: #1976d2;  
+    color: white;               
+    transform: scale(1.05);      /* Phóng to button khi hover */
+    transition: all 0.3s ease;  /* Hiệu ứng chuyển đổi mượt */
+  }
+  .container-content-pay{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+  }

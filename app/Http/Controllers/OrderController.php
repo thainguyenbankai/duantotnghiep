@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\OrderStatus;
+use App\Models\OrderUser;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -11,24 +13,20 @@ class OrderController extends Controller
      */
     public function index()
     {
-        return view('admin.Order.index');
+        $orders = OrderUser::all();
+        $statuses = OrderStatus::all();
+        return view('admin.Order.index', compact('orders', 'statuses'));
+    }
+    public function updateStatus(Request $request, $id)
+    {   
+        $user = OrderUser::findOrFail($id);
+        $user->status_id = $request->input('status_id');
+        $user->save();
+
+        return redirect()->route('admin.orders.index')->with('success', 'Trạng thái người dùng đã được cập nhật.');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
 
     /**
      * Display the specified resource.

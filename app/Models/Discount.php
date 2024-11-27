@@ -11,3 +11,4 @@ class discount extends Model
     protected $table = 'discounts';
     protected $fillable = ['discount', 'description'];
 }
+    

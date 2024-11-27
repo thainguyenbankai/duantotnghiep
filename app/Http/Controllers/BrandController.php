@@ -94,4 +94,15 @@ class BrandController extends Controller
         $brands->delete();
         return redirect()->route('admin.brands.index')->with('success', 'Xóa thương hiệu thành công!');
     }
+    public function trash_brand()
+    {
+        $brands = Brand::onlyTrashed()->paginate(10);
+        return view('admin.Brands.trash', compact('brands'));
+    }
+    public function restore_brand($id)
+    {
+        $brand = Brand::withTrashed()->where('id', $id)->first();
+        $brand->restore();
+        return redirect()->route('admin.trash_brands')->with('success', 'Khôi phục thương hiệu thành công!');
+    }
 }

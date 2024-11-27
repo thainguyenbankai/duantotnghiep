@@ -9,7 +9,11 @@
 
     <!-- Thêm nút Thêm thương hiệu -->
     <div class="mb-4 flex justify-between items-center">
+        <div>
         <a href="{{ route('admin.brands.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Thêm thương hiệu</a>
+        <a href="{{ route('admin.trash_brands') }}" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Thùng rác</a>
+            
+        </div>
 
         <!-- Ô tìm kiếm -->
         <div>

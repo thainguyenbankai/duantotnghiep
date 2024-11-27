@@ -38,4 +38,12 @@ class AdminController extends Controller
     {
         return view('admin.ProductType.index');
     }
+    public function updateStatus(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $user->keyy = $request->input('keyy');
+        $user->save();
+
+        return redirect()->route('admin.index')->with('success', 'Trạng thái người dùng đã được cập nhật.');
+    }
 }

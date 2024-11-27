@@ -24,108 +24,73 @@
               <form action="{{ route('logout') }}" method="POST" class="inline">
                 @csrf
                 <button type="submit" class="text-white hover:text-gray-200">Đăng xuất</button>
-            </form>
+              </form>
             </div>
           </div>
-            <span class="container mx-auto mt-4 block sm:inline">Xin chào, {{ Auth::user()->name }}!</span>
+          <span class="container mx-auto mt-4 block sm:inline">Xin chào, {{ Auth::user()->name }}!</span>
         </div>
     </nav>
 
-    
     <!-- Phần hiển thị thông báo -->
-  
+    <div class="container mx-auto mt-4">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        @if(session('success'))
+            <script>
+                Swal.fire({
+                    title: 'Thành công!',
+                    text: "{{ session('success') }}",
+                    icon: 'success',
+                    confirmButtonText: 'Xác nhận'
+                });
+            </script>
+        @endif
+
+        @if(session('error'))
+            <script>
+                Swal.fire({
+                    title: 'Lỗi!',
+                    text: "{{ session('error') }}",
+                    icon: 'error',
+                    confirmButtonText: 'Xác nhận'
+                });
+            </script>
+        @endif
+    </div>
 
     <!-- Phần hiển thị các thẻ -->
     <div class="container mx-auto mt-10">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <a href="{{ route('admin.categories.index') }}" class="bg-gradient-to-r from-green-300 to-green-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
                 <h2 class="text-lg font-semibold text-gray-700 flex items-center"><i class="fas fa-folder mr-2"></i> Danh mục</h2>
-                <p class="mt-2 text-2xl font-bold">1,234</p>
             </a>
-            
             <a href="{{ route('admin.products.index') }}" class="bg-gradient-to-r from-purple-300 to-purple-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
                 <h2 class="text-lg font-semibold text-gray-700 flex items-center"><i class="fas fa-box mr-2"></i> Sản phẩm</h2>
-                <p class="mt-2 text-2xl font-bold">890</p>
             </a>
-            
             <a href="{{ route('admin.orders.index') }}" class="bg-gradient-to-r from-yellow-300 to-yellow-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
                 <h2 class="text-lg font-semibold text-gray-700 flex items-center"><i class="fas fa-shopping-cart mr-2"></i> Đơn hàng</h2>
                 <p class="mt-2 text-2xl font-bold">567</p>
             </a>
-            
-            <a href="{{ route('admin.revenues.index') }}" class="bg-gradient-to-r from-blue-300 to-blue-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
-                <h2 class="text-lg font-semibold text-gray-700 flex items-center"><i class="fas fa-dollar-sign mr-2"></i> Doanh thu</h2>
-                <p class="mt-2 text-2xl font-bold">12,345,000 VNĐ</p>
-            </a>
-            
+           
             <a href="{{ route('admin.brands.index') }}" class="bg-gradient-to-r from-blue-300 to-blue-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
-                <h2 class="text-lg font-semibold text-gray-700 flex items-center">
-                    <i class="fas fa-tags mr-2"></i> Thương Hiệu
-                </h2>
-                <p class="mt-2 text-xl font-bold">Sam sung, oppo...</p>
+                <h2 class="text-lg font-semibold text-gray-700 flex items-center"><i class="fas fa-tags mr-2"></i> Thương Hiệu</h2>
             </a>
-            
-            <a href="{{ route('admin.suppliers.index') }}" class="bg-gradient-to-r from-purple-300 to-purple-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
-                <h2 class="text-lg font-semibold text-gray-700 flex items-center">
-                    <i class="fas fa-truck mr-2"></i> Nhà cung cấp
-                </h2>
-                <p class="mt-2 text-xl font-bold">Xem thêm...</p>
+            <a href="{{ route('admin.reviews.index') }}" class="bg-gradient-to-r from-blue-300 to-blue-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
+                <h2 class="text-lg font-semibold text-gray-700 flex items-center"><i class="fas fa-tags mr-2"></i> Bình luận</h2>
+                <p class="mt-2 text-xl font-bold">Quản lý bình luận</p>
             </a>
-            
-            <a href="{{ route('admin.revenues.index') }}" class="bg-gradient-to-r from-green-300 to-green-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
-                <h2 class="text-lg font-semibold text-gray-700 flex items-center">
-                    <i class="fas fa-percent mr-2"></i> Mã giảm giá
-                </h2>
-                <p class="mt-2 text-2xl font-bold">3</p>
-            </a>
-            
-            <a href="{{ route('admin.revenues.index') }}" class="bg-gradient-to-r from-yellow-300 to-yellow-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
-                <h2 class="text-lg font-semibold text-gray-700 flex items-center">
-                    <i class="fas fa-warehouse mr-2"></i> Kho hàng
-                </h2>
-                <p class="mt-2 text-xl font-bold">1000</p>
-            </a>
-            
-            
+           
             
         </div>
 
-        
         @yield('content')
         @yield('main')
     </div>
+    
     <br>
     <nav class="bg-gradient-to-r from-blue-600 to-blue-400 p-4 shadow-lg">
         <div class="container mx-auto">
             <h1 class="text-white text-center text-xl font-bold">Trương Văn Hiếu - Copyright@2024</h1>
         </div>
     </nav>
-    <!-- Hiển thị thông báo khi có session -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @if(session('success'))
-    <script>
-        
-        Swal.fire({
-            title: 'Thành công!',
-            text: "{{ session('success') }}",
-            icon: 'success',
-            confirmButtonText: 'Xác nhận '
-        });
-    </script>
-    @endif
-
-   
-
-    @if(session('error'))
-    <script>
-        Swal.fire({
-            title: 'Lỗi!',
-            text: "{{ session('error') }}",
-            icon: 'error',
-            confirmButtonText: 'Xác nhận'
-        });
-    </script>
-    @endif
-
 </body>
 </html>

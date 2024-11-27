@@ -1,0 +1,27 @@
+.about-us-container {
+    background-color: #f9f9f9;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.about-us-title {
+    text-align: center;
+    color: #333;
+}
+
+.about-us-content p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.about-us-features {
+    text-align: center;
+}
+
+.feature {
+    padding: 10px;
+}
+
+.feature p {
+    font-size: 1.2rem;
+}

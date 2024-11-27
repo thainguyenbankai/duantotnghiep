@@ -1,0 +1,89 @@
+.voucher-card {
+    position: relative;
+    min-width: 320px;
+    min-height: 200px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-image: url('https://file.hstatic.net/200000306687/file/background-coupon_d5a81f5bc7ea49_ec6d59fdd17c4a718809792590ed9455.png');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.voucher-container {
+    padding-left: 20px;
+}
+
+.voucher-content {
+    position: relative;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.voucher-code {
+    position: relative;
+    right: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+.voucher-description {
+    position: relative;
+    right: 28px;
+    font-size: 18px;
+    max-width: 200px;
+    color: red;
+    text-align: center;
+}
+
+.voucher-discount {
+    position: relative;
+    right: 28px;
+    font-size: 18px;
+    color: #e74c3c;
+    text-transform: uppercase;
+}
+
+.voucher-copy-button {
+    padding: 5px 16px;
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-align: center;
+    position: relative;
+    right: 28px;
+}
+
+.swiper-button-prev::after {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.swiper-button-next::after {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+@media (max-width: 639px) {
+    .voucher-discount {
+        font-weight: 600;
+    }
+
+    .voucher-copy-button {
+        margin-top: 10px;
+    }
+}

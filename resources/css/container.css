@@ -1,0 +1,21 @@
+.container {
+    margin: 40px auto;
+    max-width: calc(100% - 200px);
+
+}
+
+:root {
+    --tim: #633976;
+    --yellow: #CD9935;
+    --white: #FFFEFE;
+    --font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: #f9f9f9;
+}
+
+
+.search i {
+    padding: 13px;
+}
