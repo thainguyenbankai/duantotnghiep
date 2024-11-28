@@ -75,7 +75,26 @@ Route::post('/api/newpassword', function (Request $request) {
     return response()->json(['message' => 'Đổi mật khẩu thành công']);
 })->name('new.password');
 
+Route::post('/api/favorites', function (Request $request) {
+    $user = Auth::user();
+    if ($user) {
+        $product_id = $request->productId; 
 
+        $existingWishList = WishList::where('user_id', $user->id)
+                                    ->where('product_id', $product_id)
+                                    ->first();
+        if ($existingWishList) {
+            return response()->json(['message' => 'Sản phẩm đã có trong danh sách yêu thích'], 400);
+        }
+        WishList::create([
+            'user_id' => $user->id,
+            'product_id' => $product_id,
+        ]);
+
+        return response()->json(['message' => 'Sản phẩm đã được thêm vào danh sách yêu thích'], 200);
+    }
+    return response()->json(['message' => 'Vui lòng đăng nhập để tiếp tục'], 401);
+});
 
 Route::get('verify-email/{token?}/{email?}', function ($token = null, $email = null) {
     $encryptedUserData = Cookie::get('user_data');

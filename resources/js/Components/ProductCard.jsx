@@ -20,6 +20,28 @@ const getRandomDescription = () => {
     ];
     return descriptions[getRandomInt(0, descriptions.length - 1)];
 };
+
+const handleAddToFavorites = async (productId) => {
+    try {
+        const response = await fetch('/api/favorites', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ productId })
+        });
+
+        if (response.ok) {
+            console.log(`Added product ${productId} to favorites`);
+        } else {
+            console.error('Failed to add to favorites');
+        }
+    } catch (error) {
+        console.error('Error adding to favorites', error);
+    }
+};
+
 const getRandomReviews = (numReviews = 5) => {
     const names = ['John Doe', 'Jane Smith', 'Alice Johnson', 'Bob Brown', 'Charlie Davis'];
     const comments = [
@@ -46,18 +68,14 @@ const ProductCard = ({ product }) => {
     const productDescription = product.description || getRandomDescription();
     const productPrice = product.price !== undefined ? product.price : getRandomPrice();
     const productBadgeText = product.badgeText || 'Không có thông tin';
-    const productInstallment = 0; // Assuming no installment for now
-    const productDiscount = getRandomInt(1, 5) * 10; // Random discount between 10-50%
+    const productInstallment = 0;
+    const productDiscount = getRandomInt(1, 5) * 10;
     const productVoucher = product.voucher || 'Không có voucher khuyến mãi';
-    const productRating = product.rating || getRandomRating(); // Use passed rating or random
-    const productViews = product.views || getRandomViews(); // Use passed views or random
-    const productReviews = product.reviews || getRandomReviews(); // Use passed reviews or random
+    const productRating = product.rating || getRandomRating();
+    const productViews = product.views || getRandomViews();
+    const productReviews = product.reviews || getRandomReviews();
     const fiveStarReviews = productReviews.filter(review => review.rating === 5);
     const totalFiveStarReviews = fiveStarReviews.length;
-
-    const handleAddToFavorites = useCallback(() => {
-        console.log(`Added product ${product.id} to favorites`);
-    }, [product.id]);
 
     return (
         <Card
@@ -68,7 +86,7 @@ const ProductCard = ({ product }) => {
                     <span className="text-gray-400">Không có ảnh</span>
                 </div>}
             actions={[
-                <Button type="link" icon={<HeartOutlined />} onClick={handleAddToFavorites} className="text-red-500 hover:text-red-600">
+                <Button type="link" icon={<HeartOutlined />} onClick={() => handleAddToFavorites(product.id)} className="text-red-500 hover:text-red-600">
                     Yêu thích
                 </Button>,
 
@@ -79,22 +97,19 @@ const ProductCard = ({ product }) => {
                 </Link>,
             ]}
         >
-
             <Meta
-
-                title={<div className="flex justify-between items-center">
-
-                    <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded ml-2">
-                        Trả góp 0%
-                    </span>
-                    {productDiscount && (
-                        <span className="bg-green-600 text-white text-xs px-2 py-1 rounded ml-2">
-                            Giảm giá {productDiscount}%
+                title={
+                    <div className="flex justify-between items-center">
+                        <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded ml-2">
+                            Trả góp 0%
                         </span>
-                    )}
-                </div>
+                        {productDiscount && (
+                            <span className="bg-green-600 text-white text-xs px-2 py-1 rounded ml-2">
+                                Giảm giá {productDiscount}%
+                            </span>
+                        )}
+                    </div>
                 }
-
                 description={
                     <>
                         <span className="product-name text-lg font-bold text-gray-900 truncate">{productName}</span>
