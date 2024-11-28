@@ -10,7 +10,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Reviews;
 use App\Models\Category;
-use App\Models\Wishlist;
+use App\Models\Favorites;
 use App\Models\OrderUser;
 use App\Models\ProductCart;
 use Illuminate\Support\Str;
@@ -80,13 +80,13 @@ Route::post('/api/favorites', function (Request $request) {
     if ($user) {
         $product_id = $request->productId; 
 
-        $existingWishList = WishList::where('user_id', $user->id)
+        $existingWishList = Favorites::where('user_id', $user->id)
                                     ->where('product_id', $product_id)
                                     ->first();
         if ($existingWishList) {
             return response()->json(['message' => 'Sản phẩm đã có trong danh sách yêu thích'], 400);
         }
-        WishList::create([
+        Favorites::create([
             'user_id' => $user->id,
             'product_id' => $product_id,
         ]);
@@ -519,13 +519,20 @@ Route::get('/products/{id}', function ($id) {
     return Inertia::render('Details', ['productData' => $productData]);
 })->name('products.show');
 
-Route::get('/wishlist',function(){
-  $user_id = Auth::id();
-  if ($user_id) {
-    $wishlists = Wishlist::where('user_id', $user_id)->get();
-    return Inertia::render('Wishlist', ['wishlists' => $wishlists]);
-  }
+
+
+Route::get('/wishlist', function() {
+    $user_id = Auth::id();
+    if ($user_id) {
+        $wishlists = Favorites::with('product')->where('user_id', $user_id)->get();
+  
+        return Inertia::render('Wishlist', ['wishlists' => $wishlists]);
+    } else {
+        return redirect()->route('login'); 
+    }
 })->name('wishlist');
+
+
 
 // get thumbnail của color
 Route::get('/api/colors/{id}/thumbnail', function ($id) {

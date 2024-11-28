@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from '@inertiajs/inertia-react';
-import { Card, Button, Rate, Tooltip } from 'antd';
+import { Card, Button, Rate, message  ,Tooltip } from 'antd';
 import { HeartOutlined, ShoppingCartOutlined, EyeOutlined, EyeFilled } from '@ant-design/icons';
 
 const { Meta } = Card;
@@ -32,15 +32,19 @@ const handleAddToFavorites = async (productId) => {
             body: JSON.stringify({ productId })
         });
 
+        const data = await response.json();
+
         if (response.ok) {
-            console.log(`Added product ${productId} to favorites`);
+            message.success(data.message);
         } else {
-            console.error('Failed to add to favorites');
+            message.error(data.message);
         }
     } catch (error) {
         console.error('Error adding to favorites', error);
+        message.error('Lỗi xảy ra khi thêm vào yêu thích.');
     }
 };
+
 
 const getRandomReviews = (numReviews = 5) => {
     const names = ['John Doe', 'Jane Smith', 'Alice Johnson', 'Bob Brown', 'Charlie Davis'];
