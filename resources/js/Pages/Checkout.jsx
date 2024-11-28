@@ -16,9 +16,13 @@ const Checkout = () => {
     }
   });
   useEffect(() => {
-    // Lưu giỏ hàng vào sessionStorage mỗi khi có sự thay đổi
-    sessionStorage.setItem('checkoutItems', JSON.stringify(cart));
-  }, [cart]);
+    // Nếu giỏ hàng đã bị xóa hoặc người dùng quay lại, lấy lại giỏ hàng từ sessionStorage
+    const LocalCarts = sessionStorage.getItem('checkoutItems');
+    if (LocalCarts) {
+      setCart(JSON.parse(LocalCarts));
+    }
+  }, []);
+
   const [voucher, setVoucher] = useState('');
   const [shippingFee] = useState(32700);
   const discount = voucher === 'SHOPEE20' ? 20000 : 0;
@@ -75,6 +79,7 @@ const Checkout = () => {
     setLoading(true);
 
     try {
+      // Gửi yêu cầu tạo đơn hàng
       const orderResponse = await fetch('/api/orders', {
         method: 'POST',
         headers: {
@@ -91,11 +96,9 @@ const Checkout = () => {
       const orderResult = await orderResponse.json();
       const orderId = orderResult.id;
 
-      setCart([]);
-      sessionStorage.removeItem('checkoutItems');
-
       if (paymentMethod === 'bank') {
-        const paymentResponse = await fetch('/api/vnpay/create-payment-link', {
+        // Nếu thanh toán qua ngân hàng, tạo link thanh toán VNPay
+        const paymentResponse = await fetch('vnpay/create-payment-link', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -111,9 +114,15 @@ const Checkout = () => {
         const paymentResult = await paymentResponse.json();
         const vnpayUrl = paymentResult.paymentUrl;
 
+        // Chuyển hướng người dùng đến VNPay để thanh toán
         window.location.href = vnpayUrl;
       } else {
+        // Nếu thanh toán khi nhận hàng, không xóa giỏ hàng ngay
         message.success('Đặt hàng thành công!');
+
+        // Xóa giỏ hàng chỉ khi thanh toán thành công hoặc chọn COD
+        setCart([]);
+        sessionStorage.removeItem('checkoutItems');
       }
     } catch (error) {
       console.error(error);
@@ -122,6 +131,7 @@ const Checkout = () => {
       setLoading(false);
     }
   };
+
 
 
   const handleAddAddress = async () => {

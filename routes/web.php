@@ -384,10 +384,17 @@ Route::post('/api/orders', function (Request $request) {
     }
     return response()->json($order, 201);
 });
-Route::post('api/vnpay/create-payment-link', [VNPayController::class, 'createPaymentLink']);
+Route::post('/vnpay/create-payment-link', [VNPayController::class, 'createPaymentLink']);
 Route::post('/vnpay/callback', [VNPayController::class, 'callback'])->name('vnpay.callback');
 Route::get('/vnpay/return', [VNPayController::class, 'return'])->name('vnpay.return');
 
+Route::post('/api/vnpay', function (Request $request) {
+    $client = new \GuzzleHttp\Client();
+    $response = $client->post('https://sandbox.vnpayment.vn/paymentv2/vpcpay.html', [
+        'form_params' => $request->all(),
+    ]);
+    return response()->json(json_decode($response->getBody(), true));
+});
 
 
 

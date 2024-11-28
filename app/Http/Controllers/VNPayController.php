@@ -44,6 +44,7 @@ class VNPayController extends Controller
 
     public function callback(Request $request)
     {
+        return dd($request->all());
         $vnp_Params = $request->all();
         $vnp_SecureHash = $vnp_Params['vnp_SecureHash'];
         unset($vnp_Params['vnp_SecureHash']);
@@ -88,36 +89,56 @@ class VNPayController extends Controller
 
     public function return(Request $request)
     {
+        // Lấy tất cả tham số trả về từ VNPay
         $vnp_Params = $request->all();
+
+        // Lấy mã bảo mật trả về từ VNPay
         $vnp_SecureHash = $vnp_Params['vnp_SecureHash'];
 
+        // Xóa tham số vnp_SecureHash để tính toán lại bảo mật
         unset($vnp_Params['vnp_SecureHash']);
+
+        // Sắp xếp lại tham số
         ksort($vnp_Params);
 
+        // Xây dựng query string từ các tham số
         $query = urldecode(http_build_query($vnp_Params));
+
+        // Tính toán mã bảo mật từ các tham số
         $calculatedHash = hash_hmac('sha512', $query, $this->vnp_HashSecret);
 
+        // Kiểm tra xem mã bảo mật có khớp không
         if ($calculatedHash !== $vnp_SecureHash) {
             Log::error('Dữ liệu VNPay không hợp lệ', ['params' => $vnp_Params]);
             return redirect()->route('page.home')->withErrors('Dữ liệu từ VNPay không hợp lệ.');
         }
 
+        // Kiểm tra mã phản hồi
         $vnp_ResponseCode = $vnp_Params['vnp_ResponseCode'];
+
+        // Kiểm tra nếu giao dịch thành công
         if ($vnp_ResponseCode == '00') {
+            // Cập nhật trạng thái thanh toán thành công
             DB::table('payments')->where('transaction_id', $vnp_Params['vnp_TxnRef'])->update([
                 'transaction_status' => 'success',
                 'vnp_response_code' => $vnp_ResponseCode,
                 'bank_code' => $vnp_Params['vnp_BankCode'] ?? null,
             ]);
+
+            // Trả về trang giỏ hàng với thông báo thành công
             return redirect()->route('cart')->with('message', 'Thanh toán thành công');
         } else {
+            // Cập nhật trạng thái thanh toán thất bại
             DB::table('payments')->where('transaction_id', $vnp_Params['vnp_TxnRef'])->update([
                 'transaction_status' => 'failed',
                 'vnp_response_code' => $vnp_ResponseCode,
             ]);
+
+            // Trả về trang chủ với thông báo thất bại
             return redirect()->route('page.home')->withErrors('Thanh toán thất bại.');
         }
     }
+
     private function generateSecureHash($vnp_Params)
     {
         ksort($vnp_Params);
