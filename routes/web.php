@@ -31,7 +31,6 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SupplierController;
-use App\Http\Controllers\ProductTypeController;
 use App\Http\Controllers\Auth\VerificationController;
 
 
@@ -718,8 +717,6 @@ Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
 
     Route::get('/trash_brand', [BrandController::class, 'trash_brand'])->name('trash_brands');
 
-    Route::get('/productTypes', [ProductTypeController::class, 'rec_productType'])->name('productTypes');
-    Route::resource('productTypes', ProductTypeController::class);
 
     Route::resource('reviews', ReviewController::class);
     Route::patch('reviews/{id}/toggle-status', [ReviewController::class, 'toggleStatus'])->name('reviews.toggleStatus');

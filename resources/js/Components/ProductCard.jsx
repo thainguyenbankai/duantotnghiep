@@ -63,15 +63,15 @@ const ProductCard = ({ product }) => {
         <Card
             hoverable
             className="product-card shadow-lg rounded-lg overflow-hidden border border-gray-200 transition-transform duration-300 ease-in-out transform hover:scale-105 hover:bg-gray-50"
-            cover={imageUrl ? <img alt={productName} src={imageUrl} className="product-image m-auto" /> : 
-            <div className="product-image-placeholder flex items-center justify-center bg-gray-200 h-48">
-                <span className="text-gray-400">Không có ảnh</span>
-            </div>}
+            cover={imageUrl ? <img alt={productName} src={imageUrl} className="product-image m-auto" /> :
+                <div className="product-image-placeholder flex items-center justify-center bg-gray-200 h-48">
+                    <span className="text-gray-400">Không có ảnh</span>
+                </div>}
             actions={[
                 <Button type="link" icon={<HeartOutlined />} onClick={handleAddToFavorites} className="text-red-500 hover:text-red-600">
                     Yêu thích
                 </Button>,
-             
+
                 <Link href={route('products.show', { id: product.id })}>
                     <Button type="link" icon={<EyeOutlined />} className="text-green-500 hover:text-green-600">
                         Xem chi tiết
@@ -79,14 +79,14 @@ const ProductCard = ({ product }) => {
                 </Link>,
             ]}
         >
-            
+
             <Meta
-            
+
                 title={<div className="flex justify-between items-center">
-                 
+
                     <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded ml-2">
-                          Trả góp 0%
-                        </span>
+                        Trả góp 0%
+                    </span>
                     {productDiscount && (
                         <span className="bg-green-600 text-white text-xs px-2 py-1 rounded ml-2">
                             Giảm giá {productDiscount}%
@@ -94,10 +94,10 @@ const ProductCard = ({ product }) => {
                     )}
                 </div>
                 }
-                
+
                 description={
                     <>
-                       <span className="product-name text-lg font-bold text-gray-900 truncate">{productName}</span>
+                        <span className="product-name text-lg font-bold text-gray-900 truncate">{productName}</span>
                         <div className="product-description text-sm text-gray-500 mb-2">
                             {productDescription && productDescription.length > 80
                                 ? `${productDescription.substring(0, 60)}...`
@@ -148,7 +148,7 @@ ProductCard.propTypes = {
                 comment: PropTypes.string,
                 rating: PropTypes.number,
             })
-        ), 
+        ),
     }).isRequired,
 };
 

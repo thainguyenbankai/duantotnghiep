@@ -1,96 +1,157 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  @vite('resources/css/app.css')
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>@yield('title')</title>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="assets/img/favicon.ico">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    @vite('resources/css/app.css')
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title')</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{{ asset('assets/css/bootstrap.min.css') }}" rel="stylesheet" />
+    <link href="{{ asset('assets/css/animate.min.css') }}" rel="stylesheet" />
+    <!-- Light Bootstrap Table core CSS -->
+    <link href="{{ asset('assets/css/light-bootstrap-dashboard.css?v=1.4.0') }}" rel="stylesheet" />
+    <!-- CSS for Demo Purpose, don't include it in your project -->
+    <link href="{{ asset('assets/css/demo.css') }}" rel="stylesheet" />
+    <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,700,300' rel='stylesheet' type='text/css'>
+    <link href="{{ asset('assets/css/pe-icon-7-stroke.css') }}" rel="stylesheet" />
 </head>
-<body class="bg-gray-100">
-    <!-- Thanh điều hướng -->
-    <nav class="bg-gradient-to-r from-blue-600 to-blue-400 p-4 shadow-lg">
-        <div class="container mx-auto">
-          <div class="flex justify-between items-center">
-            <a href="{{ route('admin.index') }}">
-                <h1 class="text-white text-3xl font-bold">Admin</h1>
-            </a>
-            <div class="flex space-x-4">
-              <a href="{{ route('admin.users.index') }}" class="text-white hover:text-gray-200">Trang chủ</a>
-              <a href="#" class="text-white hover:text-gray-200">Người dùng</a>
-              <a href="{{ route('admin.productTypes.index') }}" class="text-white hover:text-gray-200">Kiểu sản phẩm</a>
-              <a href="#" class="text-white hover:text-gray-200">Cài đặt</a>
-              <form action="{{ route('logout') }}" method="POST" class="inline">
-                @csrf
-                <button type="submit" class="text-white hover:text-gray-200">Đăng xuất</button>
-              </form>
+<body>
+
+<div class="wrapper">
+    <div class="sidebar" data-color="purple" data-image="assets/img/sidebar-5.jpg">
+        <div class="sidebar-wrapper">
+            <div class="logo">
+                <a href="http://www.creative-tim.com" class="simple-text">
+                    Creative Tim
+                </a>
             </div>
-          </div>
-          <span class="container mx-auto mt-4 block sm:inline">Xin chào, {{ Auth::user()->name }}!</span>
+
+            <ul class="nav">
+                <li class="active">
+                    <a href="{{ route('admin.index') }}">
+                        <i class="pe-7s-graph"></i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.categories.index') }}">
+                        <i class="pe-7s-folder"></i>
+                        <p>Danh mục</p>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.products.index') }}">
+                        <i class="pe-7s-note2"></i>
+                        <p>Sản phẩm</p>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.orders.index') }}">
+                        <i class="pe-7s-cart"></i>
+                        <p>Đơn hàng</p>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.brands.index') }}">
+                        <i class="pe-7s-rocket"></i>
+                        <p>Thương hiệu</p>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.reviews.index') }}">
+                        <i class="pe-7s-comment"></i>
+                        <p>Đánh giá</p>
+                    </a>
+                </li>
+            </ul>
         </div>
-    </nav>
-
-    <!-- Phần hiển thị thông báo -->
-    <div class="container mx-auto mt-4">
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        @if(session('success'))
-            <script>
-                Swal.fire({
-                    title: 'Thành công!',
-                    text: "{{ session('success') }}",
-                    icon: 'success',
-                    confirmButtonText: 'Xác nhận'
-                });
-            </script>
-        @endif
-
-        @if(session('error'))
-            <script>
-                Swal.fire({
-                    title: 'Lỗi!',
-                    text: "{{ session('error') }}",
-                    icon: 'error',
-                    confirmButtonText: 'Xác nhận'
-                });
-            </script>
-        @endif
     </div>
 
-    <!-- Phần hiển thị các thẻ -->
-    <div class="container mx-auto mt-10">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <a href="{{ route('admin.categories.index') }}" class="bg-gradient-to-r from-green-300 to-green-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
-                <h2 class="text-lg font-semibold text-gray-700 flex items-center"><i class="fas fa-folder mr-2"></i> Danh mục</h2>
-            </a>
-            <a href="{{ route('admin.products.index') }}" class="bg-gradient-to-r from-purple-300 to-purple-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
-                <h2 class="text-lg font-semibold text-gray-700 flex items-center"><i class="fas fa-box mr-2"></i> Sản phẩm</h2>
-            </a>
-            <a href="{{ route('admin.orders.index') }}" class="bg-gradient-to-r from-yellow-300 to-yellow-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
-                <h2 class="text-lg font-semibold text-gray-700 flex items-center"><i class="fas fa-shopping-cart mr-2"></i> Đơn hàng</h2>
-                <p class="mt-2 text-2xl font-bold">567</p>
-            </a>
-           
-            <a href="{{ route('admin.brands.index') }}" class="bg-gradient-to-r from-blue-300 to-blue-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
-                <h2 class="text-lg font-semibold text-gray-700 flex items-center"><i class="fas fa-tags mr-2"></i> Thương Hiệu</h2>
-            </a>
-            <a href="{{ route('admin.reviews.index') }}" class="bg-gradient-to-r from-blue-300 to-blue-400 p-4 rounded-lg shadow-md hover:scale-105 transform transition duration-300">
-                <h2 class="text-lg font-semibold text-gray-700 flex items-center"><i class="fas fa-tags mr-2"></i> Bình luận</h2>
-                <p class="mt-2 text-xl font-bold">Quản lý bình luận</p>
-            </a>
-           
-            
-        </div>
+    <div class="main-panel">
+        <nav class="navbar navbar-default navbar-fixed">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navigation-example-2">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">Dashboard</a>
+                </div>
+                <div class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav navbar-left">
+                        <li>
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-dashboard"></i>
+                                <p class="hidden-lg hidden-md">Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-bell"></i>
+                                <p class="hidden-lg hidden-md">Thông báo</p>
+                                <b class="caret hidden-lg hidden-md"></b>
+                            </a>
+                           
+                        </li>
+                    </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                       
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <p>Dropdown
+                                    <b class="caret"></b>
+                                </p>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('logout') }}">
+                                <p>Đăng xuất</p>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
 
         @yield('content')
-        @yield('main')
+
+        <footer class="footer">
+            <div class="container-fluid">
+                <p class="copyright pull-right">
+                    &copy; <script>document.write(new Date().getFullYear())</script>  Create by website <3
+                </p>
+            </div>
+        </footer>
     </div>
-    
-    <br>
-    <nav class="bg-gradient-to-r from-blue-600 to-blue-400 p-4 shadow-lg">
-        <div class="container mx-auto">
-            <h1 class="text-white text-center text-xl font-bold">Trương Văn Hiếu - Copyright@2024</h1>
-        </div>
-    </nav>
+</div>
+
+<script src="{{ asset('assets/js/jquery.3.2.1.min.js') }}" type="text/javascript"></script>
+<script src="{{ asset('assets/js/bootstrap.min.js') }}" type="text/javascript"></script>
+<script src="{{ asset('assets/js/chartist.min.js') }}"></script>
+<script src="{{ asset('assets/js/bootstrap-notify.js') }}"></script>
+<script src="{{ asset('assets/js/light-bootstrap-dashboard.js?v=1.4.0') }}"></script>
+<script src="{{ asset('assets/js/demo.js') }}"></script>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        demo.initChartist();
+        $.notify({
+            icon: 'pe-7s-gift',
+            message: " <b>{{ session('success') }}</b> "
+        },{
+            type: 'success',
+            timer: 1000
+        });
+    });
+</script>
+
 </body>
 </html>

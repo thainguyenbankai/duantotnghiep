@@ -1,20 +1,20 @@
 
 @extends('admin.main_admin')
 
-@section('title', 'Danh sách Thương hiệu')
+@section('title', 'Danh sách bình luận')
 
 @section('content')
 <div class="container mx-auto mt-10">
-    <h2 class="text-2xl font-bold mb-4 text-center">DANH SÁCH THƯƠNG HIỆU</h2>
+    <h2 class="text-2xl font-bold mb-4 text-center">DANH SÁCH BÌNH LUẬN</h2>
 
-    <!-- Thêm nút Thêm thương hiệu -->
+    <!-- Thêm nút Thêm bình luận -->
     <div class="mb-4 flex justify-between items-center">
-        <a href="{{ route('admin.reviews.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Thêm thương hiệu</a>
+        <a href="{{ route('admin.reviews.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition" style="visibility: hidden" >Thêm bình luận</a>
 
         <!-- Ô tìm kiếm -->
         <div>
             <form action="{{ route('admin.reviews.index') }}" method="GET">
-                <input type="text" name="search" placeholder="Tìm kiếm thương hiệu" class="px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500" value="{{ request()->get('search') }}">
+                <input type="text" name="search" placeholder="Tìm kiếm bình luận" class="px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500" value="{{ request()->get('search') }}">
                 <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Tìm kiếm</button>
             </form>
         </div>
@@ -24,7 +24,7 @@
         Tìm thấy {{ session('search') }} kết quả
     </div>
 @endif
-    <!-- Bảng thương hiệu -->
+    <!-- Bảng bình luận -->
     <div class="overflow-x-auto">
         <table class="min-w-full bg-white border border-gray-200 rounded-lg">
             <thead class="bg-gray-100">
@@ -65,7 +65,7 @@
                 @endforeach
                 @if($reviews->isEmpty())
                 <tr>
-                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">Không có thương hiệu nào.</td>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">Không có bình luận nào.</td>
                 </tr>
                 @endif
             </tbody>

@@ -8,7 +8,6 @@ use App\Models\Options;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Discount;
-use App\Models\ProductType;
 use Illuminate\Http\Request;
 use App\Models\ProductOptions;
 use Illuminate\Support\Facades\DB;
@@ -30,10 +29,9 @@ class ProductController extends Controller
         $brands = Brand::all();
         $categories = Category::all();
         $discounts = Discount::all();
-        $types = ProductType::all();
         $options = Options::all();
         $colors = Colors::all();
-        return view('admin.Product.create', compact('brands', 'categories', 'discounts', 'types', 'options', 'colors'));
+        return view('admin.Product.create', compact('brands', 'categories', 'discounts', 'options', 'colors'));
     }
     public function store(Request $request)
     {
@@ -44,12 +42,11 @@ class ProductController extends Controller
             'quantity' => 'required|integer',
             'brand_id' => 'required|exists:brands,id',
             'category_id' => 'required|exists:categories,id',
-            'type_id' => 'required|exists:product_types,id',
             'image' => 'nullable|image|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
-            $validatedData['image'] = $request->file('image')->store('images', 'public');
+            $validatedData['image'] = $request->file('image')->store('product', 'public');
         }
 
         $optionsArray = [];
@@ -75,7 +72,6 @@ class ProductController extends Controller
 
 
         $product = Product::create($validatedData);
-
         return redirect()->route('admin.products.index')->with('success', 'Thêm sản phẩm thành công.');
     }
 
@@ -90,10 +86,9 @@ class ProductController extends Controller
         }
 
         $brands = Brand::all();
-        $types = ProductType::all();
         $categories = Category::all();
 
-        return view('admin.Product.edit', compact('product', 'brands', 'types', 'categories'));
+        return view('admin.Product.edit', compact('product', 'brands', 'categories'));
     }
 
     public function update(Request $request, string $id)
@@ -105,7 +100,6 @@ class ProductController extends Controller
             'quantity' => 'required|integer',
             'brand_id' => 'required|exists:brands,id',
             'category_id' => 'required|exists:categories,id',
-            'type_id' => 'required|exists:product_types,id',
             'image' => 'nullable|image|max:2048',
             'variants' => 'required|array',
             'variants.*.ram' => 'required|string',
@@ -122,7 +116,7 @@ class ProductController extends Controller
             if ($product->image && Storage::disk('public')->exists($product->image)) {
                 Storage::disk('public')->delete($product->image);
             }
-            $data['image'] = $request->file('image')->store('images', 'public');
+            $data['image'] = $request->file('image')->store('product', 'public');
         }
 
         $product->update($data);
