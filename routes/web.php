@@ -43,7 +43,9 @@ Route::get('/show-verify', function () {
 Route::post('/verify', [VerificationController::class, 'verify'])->name('auth.verify');
 
 
-Route::get('/newpassword',fn()=>
+Route::get(
+    '/newpassword',
+    fn() =>
     Inertia::render('Auth/ResetPassword')
 )->name('auth.newpassword');
 
@@ -82,7 +84,7 @@ Route::get('verify-email/{token?}/{email?}', function ($token = null, $email = n
     if (!$encryptedUserData) {
         return Inertia::render('Auth/Login', ['error' => 'Thông tin người dùng không hợp lệ hoặc đã hết hạn.']);
     }
-    
+
     $userData = decrypt($encryptedUserData);
     if ($userData['email'] !== $email) {
         return Inertia::render('Auth/Login', ['error' => 'Email không hợp lệ.']);
@@ -274,7 +276,7 @@ Route::post("/api/comments", function (Request $request) {
 
 
 Route::post('/api/order', function (Request $request) {
-  
+
 
     // Extract data
     $address = $request->input('address');
@@ -358,8 +360,30 @@ Route::get('/categories/{id?}', function ($id = null) {
 
 Route::get('/OrderHistory', function () {
     $user_id = Auth::id();
-    return Inertia::render('OrderHistory');
-})->name('order.history');
+    $orders = OrderUser::with('orderStatus')->where('user_id', $user_id)->get();
+
+    // Sử dụng map để thêm tên trạng thái vào mỗi đơn hàng
+    $ordersWithStatus = $orders->map(function ($order) {
+        // Lấy tên trạng thái từ quan hệ với bảng order_status
+        $name_status = $order->orderStatus ? $order->orderStatus->name : 'Chưa có trạng thái';
+
+        return [
+            'id' => $order->id,
+            'order_code' => $order->order_code,
+            'total_amount' => $order->total_amount,
+            'payment_method' => $order->payment_method,
+            'created_at' => $order->created_at,
+            'name_status' => $name_status,
+            'products' => json_decode($order->products),
+        ];
+    });
+
+    // Trả về kết quả đã map trong Inertia
+    return Inertia::render('OrderHistory', [
+        'user_id' => $user_id,
+        'orders' => $ordersWithStatus,  // Truyền kết quả đã thay đổi
+    ]);
+})->name('order.history');;
 
 
 Route::post('/api/orders', function (Request $request) {
@@ -405,7 +429,43 @@ Route::post('/api/orders', function (Request $request) {
 });
 Route::post('/vnpay/create-payment-link', [VNPayController::class, 'createPaymentLink']);
 Route::post('/vnpay/callback', [VNPayController::class, 'callback'])->name('vnpay.callback');
-Route::get('/vnpay/return', [VNPayController::class, 'return'])->name('vnpay.return');
+Route::get('/vnpay/return', function (Request $request) {
+    $vnp_Amount = $request->input('vnp_Amount');
+    $vnp_BankCode = $request->input('vnp_BankCode');
+    $vnp_BankTranNo = $request->input('vnp_BankTranNo');
+    $vnp_OrderInfo = $request->input('vnp_OrderInfo');
+    $vnp_ResponseCode = $request->input('vnp_ResponseCode');
+    $vnp_SecureHash = $request->input('vnp_SecureHash');
+    $vnp_TmnCode = $request->input('vnp_TmnCode');
+    $vnp_TransactionNo = $request->input('vnp_TransactionNo');
+    $vnp_TransactionStatus = $request->input('vnp_TransactionStatus');
+    $vnp_TxnRef = $request->input('vnp_TxnRef');
+    $vnp_PayDate = $request->input('vnp_PayDate');
+    $secretKey = '6MX4BPMEHICWKWXZ7Q3T3Q3EJIIYTDVR';
+    $hashData = http_build_query($request->except('vnp_SecureHash'));
+
+    $secureHash = strtoupper(md5($hashData . '&' . $secretKey));
+
+    if ($secureHash != $vnp_SecureHash) {
+        if ($vnp_ResponseCode === '00' && $vnp_TransactionStatus === '00') {
+            $payment = Payment::where('order_id', (int) $vnp_TxnRef)->first();
+
+            if ($payment) {
+                $payment->transaction_status = "success";
+                $payment->vnp_response_code =  $vnp_ResponseCode;
+                $payment->save();
+            }
+            // return response()->json(["message" => "Payment successful, Order ID: $vnp_TxnRef"], 200);
+            // return redirect()->route('orders.history')->with('message', 'Thanh toán thành công !');
+            return Inertia::render('OrderHistory', ['message' => "Thanh toan thành công"]);
+        } else {
+            return response()->json(["message" => "Payment failed, please try again."], 400);
+        }
+    } else {
+        return response()->json(["message" => "Invalid response signature"], 400);
+    }
+})->name('vnpay.return');
+
 
 Route::post('/api/vnpay', function (Request $request) {
     $client = new \GuzzleHttp\Client();
@@ -456,7 +516,7 @@ Route::get('/api/orders/history', function () {
         return response()->json($orders, 200);
     }
     return response()->json(['error' => 'Unauthorized'], 401);
-});
+})->name('orders.history');
 
 Route::get('/products/{id}', function ($id) {
     $product = Product::findOrFail($id);
@@ -507,12 +567,12 @@ Route::get('/products/{id}', function ($id) {
     return Inertia::render('Details', ['productData' => $productData]);
 })->name('products.show');
 
-Route::get('/wishlist',function(){
-  $user_id = Auth::id();
-  if ($user_id) {
-    $wishlists = Wishlist::where('user_id', $user_id)->get();
-    return Inertia::render('Wishlist', ['wishlists' => $wishlists]);
-  }
+Route::get('/wishlist', function () {
+    $user_id = Auth::id();
+    if ($user_id) {
+        $wishlists = Wishlist::where('user_id', $user_id)->get();
+        return Inertia::render('Wishlist', ['wishlists' => $wishlists]);
+    }
 })->name('wishlist');
 
 // get thumbnail của color
