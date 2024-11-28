@@ -80,11 +80,11 @@ Route::post('/api/newpassword', function (Request $request) {
 Route::post('/api/favorites', function (Request $request) {
     $user = Auth::user();
     if ($user) {
-        $product_id = $request->productId; 
+        $product_id = $request->productId;
 
         $existingWishList = WishList::where('user_id', $user->id)
-                                    ->where('product_id', $product_id)
-                                    ->first();
+            ->where('product_id', $product_id)
+            ->first();
         if ($existingWishList) {
             return response()->json(['message' => 'Sản phẩm đã có trong danh sách yêu thích'], 400);
         }
@@ -360,14 +360,14 @@ Route::get('/search-results', function (Request $request) {
 
 Route::get('/categories/{id?}', function ($id = null) {
     if ($id) {
-        $brand = Brand::with('products')->where('id', $id)->firstOrFail();
+        $brand = Category::with('products')->where('id', $id)->firstOrFail();
         $data = [
             'brand' => $brand,
             'products' => $brand->products,
         ];
     } else {
         $data = [
-            'brands' => Brand::with('products')->get(),
+            'brands' => Category::with('products')->get(),
             'products' => Product::all(),
         ];
     }
@@ -378,31 +378,10 @@ Route::get('/categories/{id?}', function ($id = null) {
 
 
 Route::get('/OrderHistory', function () {
-    $user_id = Auth::id();
-    $orders = OrderUser::with('orderStatus')->where('user_id', $user_id)->get();
-
-    // Sử dụng map để thêm tên trạng thái vào mỗi đơn hàng
-    $ordersWithStatus = $orders->map(function ($order) {
-        // Lấy tên trạng thái từ quan hệ với bảng order_status
-        $name_status = $order->orderStatus ? $order->orderStatus->name : 'Chưa có trạng thái';
-
-        return [
-            'id' => $order->id,
-            'order_code' => $order->order_code,
-            'total_amount' => $order->total_amount,
-            'payment_method' => $order->payment_method,
-            'created_at' => $order->created_at,
-            'name_status' => $name_status,
-            'products' => json_decode($order->products),
-        ];
-    });
 
     // Trả về kết quả đã map trong Inertia
-    return Inertia::render('OrderHistory', [
-        'user_id' => $user_id,
-        'orders' => $ordersWithStatus,  // Truyền kết quả đã thay đổi
-    ]);
-})->name('order.history');;
+    return Inertia::render('OrderHistory');
+})->name('order.history');
 
 
 Route::post('/api/orders', function (Request $request) {
@@ -518,24 +497,48 @@ Route::delete('/api/orders/{id}', function ($id) {
     if ($user_id) {
         $order = OrderUser::where('user_id', $user_id)->where('id', $id)->first();
         if ($order) {
+            Payment::where('order_id', $id)->delete();
             $order->delete();
             return response()->json(['message' => 'Đơn hàng đã được hủy thành công'], 200);
         } else {
             return response()->json(['error' => 'Đơn hàng không tồn tại hoặc bạn không có quyền hủy đơn hàng này'], 404);
         }
     }
-    return response()->json(['error' => 'Unauthorized'], 401);
+    return response()->json(['error' => 'Unauthorized'], 200);
 });
+
 //vnpay
 Route::get('/api/orders/history', function () {
     $user_id = Auth::id();
-    if ($user_id) {
 
-        $orders = OrderUser::with('orderStatus')->where('user_id', $user_id)->get();
-        return response()->json($orders, 200);
+    // Lấy tất cả đơn hàng của người dùng
+    $orders = OrderUser::with('orderStatus')->where('user_id', $user_id)->get();
+
+    if ($orders->isEmpty()) {
+        // Nếu không có đơn hàng nào, trả về lỗi
+        return response()->json(['message' => 'Không có đơn hàng nào'], 404);
     }
-    return response()->json(['error' => 'Unauthorized'], 401);
+
+    // Sử dụng map để thêm tên trạng thái vào mỗi đơn hàng
+    $ordersWithStatus = $orders->map(function ($order) {
+        // Lấy tên trạng thái từ quan hệ với bảng order_status
+        $name_status = $order->orderStatus ? $order->orderStatus->name : 'Chưa có trạng thái';
+
+        return [
+            'id' => $order->id,
+            'order_code' => $order->order_code,
+            'total_amount' => $order->total_amount,
+            'payment_method' => $order->payment_method,
+            'created_at' => $order->created_at->format('Y-m-d H:i:s'), // Định dạng ngày giờ
+            'name_status' => $name_status,
+            'products' => json_decode($order->products),
+        ];
+    });
+
+    // Trả về response JSON chứa danh sách đơn hàng
+    return response()->json(['orders' => $ordersWithStatus], 200);
 })->name('orders.history');
+
 
 Route::get('/products/{id}', function ($id) {
     $product = Product::findOrFail($id);
@@ -606,7 +609,7 @@ Route::get('/api/colors/{id}/thumbnail', function ($id) {
 
 
 Route::get('/list/category', function () {
-    $categories = Brand::all();
+    $categories = Category::all();
     return response()->json(['categories' => $categories], 200);
 })->name('categories.list');
 
