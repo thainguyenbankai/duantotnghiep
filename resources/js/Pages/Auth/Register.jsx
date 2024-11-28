@@ -1,9 +1,9 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
+import { useForm, Head, Link } from '@inertiajs/react';
+import { Form, Input, Button, Typography, Alert } from 'antd';
+import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+
+const { Title } = Typography;
 
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -22,102 +22,90 @@ export default function Register() {
     };
 
     return (
-        <>
+        <GuestLayout>
+            <Head title="Register" />
+            <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+                <Title level={2} className="text-center">Đăng Ký</Title>
 
-            <GuestLayout>
-                <Head title="Register" />
+                {errors.success && (
+                    <Alert message={errors.success} type="success" showIcon className="mb-4" />
+                )}
 
-                <form onSubmit={submit}>
-                    <div>
-                        <InputLabel htmlFor="name" value="Họ và tên" />
+                {errors.error && (
+                    <Alert message={errors.error} type="error" showIcon className="mb-4" />
+                )}
 
-                        <TextInput
-                            id="name"
+                <Form layout="vertical" onSubmitCapture={submit}>
+                    <Form.Item
+                        label="Họ và tên"
+                        validateStatus={errors.name && "error"}
+                        help={errors.name}
+                    >
+                        <Input
+                            prefix={<UserOutlined />}
                             name="name"
                             value={data.name}
-                            className="mt-1 block w-full"
-                            autoComplete="name"
-                            isFocused={true}
                             onChange={(e) => setData('name', e.target.value)}
                             required
                         />
+                    </Form.Item>
 
-                        <InputError message={errors.name} className="mt-2" />
-                    </div>
-
-                    <div className="mt-4">
-                        <InputLabel htmlFor="email" value="Email" />
-
-                        <TextInput
-                            id="email"
+                    <Form.Item
+                        label="Email"
+                        validateStatus={errors.email && "error"}
+                        help={errors.email}
+                    >
+                        <Input
+                            prefix={<MailOutlined />}
                             type="email"
                             name="email"
                             value={data.email}
-                            className="mt-1 block w-full"
-                            autoComplete="username"
                             onChange={(e) => setData('email', e.target.value)}
                             required
                         />
+                    </Form.Item>
 
-                        <InputError message={errors.email} className="mt-2" />
-                    </div>
-
-                    <div className="mt-4">
-                        <InputLabel htmlFor="password" value="Mật khẩu" />
-
-                        <TextInput
-                            id="password"
-                            type="password"
+                    <Form.Item
+                        label="Mật khẩu"
+                        validateStatus={errors.password && "error"}
+                        help={errors.password}
+                    >
+                        <Input.Password
+                            prefix={<LockOutlined />}
                             name="password"
                             value={data.password}
-                            className="mt-1 block w-full"
-                            autoComplete="new-password"
                             onChange={(e) => setData('password', e.target.value)}
                             required
                         />
+                    </Form.Item>
 
-                        <InputError message={errors.password} className="mt-2" />
-                    </div>
-
-                    <div className="mt-4">
-                        <InputLabel
-                            htmlFor="password_confirmation"
-                            value="Nhập lại mật khẩu"
-                        />
-
-                        <TextInput
-                            id="password_confirmation"
-                            type="password"
+                    <Form.Item
+                        label="Nhập lại mật khẩu"
+                        validateStatus={errors.password_confirmation && "error"}
+                        help={errors.password_confirmation}
+                    >
+                        <Input.Password
+                            prefix={<LockOutlined />}
                             name="password_confirmation"
                             value={data.password_confirmation}
-                            className="mt-1 block w-full"
-                            autoComplete="new-password"
-                            onChange={(e) =>
-                                setData('password_confirmation', e.target.value)
-                            }
+                            onChange={(e) => setData('password_confirmation', e.target.value)}
                             required
                         />
+                    </Form.Item>
 
-                        <InputError
-                            message={errors.password_confirmation}
-                            className="mt-2"
-                        />
-                    </div>
+                    <Form.Item>
+                        <div className="flex items-center justify-between">
+                            <Link href={route('login')} className="text-sm text-gray-600 underline hover:text-gray-900">
+                                Bạn có tài khoản rồi?
+                            </Link>
 
-                    <div className="mt-4 flex items-center justify-end">
-                        <Link
-                            href={route('login')}
-                            className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                        >
-                            Bạn có tài khoản rồi?
-                        </Link>
-
-                        <PrimaryButton className="ms-4" disabled={processing}>
-                            Đăng ký
-                        </PrimaryButton>
-                    </div>
-                </form>
-            </GuestLayout>
-        </>
+                            <Button type="primary" htmlType="submit" loading={processing}>
+                                Đăng ký
+                            </Button>
+                        </div>
+                    </Form.Item>
+                </Form>
+            </div>
+        </GuestLayout>
     );
 }

@@ -27,6 +27,9 @@ const HeaderLayout = () => {
             <Menu.Item key="order-history">
                 <Link href={route('order.history')}>Lịch sử mua hàng</Link>
             </Menu.Item>
+            <Menu.Item key="order-history">
+                <Link href={route('auth.newpassword')}>Đổi mật khẩu </Link>
+            </Menu.Item>
             <Menu.Item key="logout">
                 <Link href={route('logout')} method="post" as="button">Đăng xuất</Link>
             </Menu.Item>

@@ -154,15 +154,7 @@ const ProductPage = ({ products = [], brands = [], categories = [] }) => {
                                     <span>{maxPrice}đ</span>
                                 </div>
                             </div>
-                            <div className="mb-4">
-                                <h3>Đánh giá <StarOutlined className="ml-2" /></h3>
-                                <Checkbox.Group
-                                    options={['★★★★★', '★★★★☆', '★★★☆☆']}
-                                    value={ratingFilters}
-                                    onChange={handleRatingChange}
-                                    className="w-full"
-                                />
-                            </div>
+                            
                             <Button onClick={resetFilters} type="primary" icon={<ReloadOutlined />} className="w-full">
                                 Đặt lại bộ lọc
                             </Button>

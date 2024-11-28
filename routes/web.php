@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Reviews;
 use App\Models\Category;
+use App\Models\Wishlist;
 use App\Models\OrderUser;
 use App\Models\ProductCart;
 use Illuminate\Support\Str;
@@ -21,11 +22,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\VNPayController;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -40,35 +43,72 @@ Route::get('/show-verify', function () {
 Route::post('/verify', [VerificationController::class, 'verify'])->name('auth.verify');
 
 
-Route::get('verify-email/{id}/{hash}/{token?}/{email?}', function ($id, $hash, $token = null, $email = null) {
-    $user = User::find($id);
+Route::get('/newpassword',fn()=>
+    Inertia::render('Auth/ResetPassword')
+)->name('auth.newpassword');
+
+
+Route::post('/api/newpassword', function (Request $request) {
+    // $validator = Validator::make($request->all(), [
+    //     'email' => 'required|email',
+    //     'old_password' => 'required|string',
+    //     'new_password' => 'required|string|confirmed',
+    // ]);
+
+    // if ($validator->fails()) {
+    //     return response()->json(['errors' => $validator->errors()], 422);
+    // }
+
+    $user = User::where('email', $request->email)->first();
 
     if (!$user) {
-        return "Không có người dùng tồn tại";
+        return response()->json(['message' => 'Email không hợp lệ'], 404);
     }
 
-    if ($user->keyy === 'active') {
-        return "Xác minh thành công";
+    if (!Hash::check($request->old_password, $user->password)) {
+        return response()->json(['message' => 'Mật khẩu cũ không đúng'], 401);
     }
 
-    if (sha1($user->email) !== $hash) {
-        return "Mã không đúng";
-    }
-
-    if ($token && !Hash::check($token, $user->verification_code)) {
-        return "Mã không đúng";
-    }
-
-    // Cập nhật trạng thái người dùng sau khi xác minh
-    $user->keyy = "active";
-    $user->email_verified_at = now();
+    $user->password = Hash::make($request->new_password);
     $user->save();
 
-    // Đăng nhập người dùng ngay lập tức
-    Auth::login($user);
+    return response()->json(['message' => 'Đổi mật khẩu thành công']);
+})->name('new.password');
 
-    return "Xác minh thành công và bạn đã được đăng nhập.";
+
+
+Route::get('verify-email/{token?}/{email?}', function ($token = null, $email = null) {
+    $encryptedUserData = Cookie::get('user_data');
+    if (!$encryptedUserData) {
+        return Inertia::render('Auth/Login', ['error' => 'Thông tin người dùng không hợp lệ hoặc đã hết hạn.']);
+    }
+    
+    $userData = decrypt($encryptedUserData);
+    if ($userData['email'] !== $email) {
+        return Inertia::render('Auth/Login', ['error' => 'Email không hợp lệ.']);
+    }
+
+    if ($token !== $userData['verification_code']) {
+        return Inertia::render('Auth/Login', ['error' => 'Mã xác minh không đúng.']);
+    }
+
+    if (User::where('email', $userData['email'])->exists()) {
+        return Inertia::render('Auth/Login', ['error' => 'Email này đã được sử dụng hoặc mã đã hết hạn.']);
+    }
+
+    $user = User::create([
+        'name' => $userData['name'],
+        'email' => $userData['email'],
+        'password' => $userData['password'],
+        'email_verified_at' => now(),
+        'verification_code' => $userData['verification_code'],
+    ]);
+    return Inertia::render('Auth/Login', [
+        'success' => 'Xác minh thành công vui lòng đăng nhập',
+    ]);
 });
+
+
 
 
 Route::get('/', function () {
@@ -234,28 +274,7 @@ Route::post("/api/comments", function (Request $request) {
 
 
 Route::post('/api/order', function (Request $request) {
-    // Validate input
-    $validator = Validator::make($request->all(), [
-        'address.user_id' => 'required|integer|exists:users,id',
-        'address.name' => 'required|string|max:255',
-        'address.phone' => 'required|string|max:20',
-        'address.street' => 'required|string|max:255',
-        'paymentMethod' => 'required|string',
-        'totalAmount' => 'required|numeric|min:0',
-        'orderCode' => 'required|string|unique:order_users,order_code',
-        'cart' => 'required|array',
-        'cart.*.id' => 'required|integer|exists:products,id',
-        'cart.*.quantity' => 'required|integer|min:1',
-    ]);
-
-    // If validation fails, return errors
-    if ($validator->fails()) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Validation failed',
-            'errors' => $validator->errors()
-        ], 422);
-    }
+  
 
     // Extract data
     $address = $request->input('address');
@@ -488,7 +507,13 @@ Route::get('/products/{id}', function ($id) {
     return Inertia::render('Details', ['productData' => $productData]);
 })->name('products.show');
 
-
+Route::get('/wishlist',function(){
+  $user_id = Auth::id();
+  if ($user_id) {
+    $wishlists = Wishlist::where('user_id', $user_id)->get();
+    return Inertia::render('Wishlist', ['wishlists' => $wishlists]);
+  }
+})->name('wishlist');
 
 // get thumbnail của color
 Route::get('/api/colors/{id}/thumbnail', function ($id) {
