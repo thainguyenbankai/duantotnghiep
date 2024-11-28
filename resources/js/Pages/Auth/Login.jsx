@@ -1,12 +1,11 @@
-import Checkbox from '@/Components/Checkbox';
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { useEffect } from 'react';
+import { useForm, Head, Link } from '@inertiajs/react';
+import { Form, Input, Button, Checkbox, Typography, Alert } from 'antd';
+import { MailOutlined, LockOutlined } from '@ant-design/icons';
 
-export default function Login({ status, canResetPassword, userKey }) {
+const { Title } = Typography;
+
+export default function Login({ status, canResetPassword, userKey, success, error }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
@@ -24,82 +23,83 @@ export default function Login({ status, canResetPassword, userKey }) {
         <>
             <Head title="Log in" />
             <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-                <h2 className="text-2xl font-bold text-center mb-6">Đăng Nhập</h2>
+                <Title level={2} className="text-center">Đăng Nhập</Title>
 
                 {status && (
-                    <div className="mb-4 text-sm font-medium text-green-600">
-                        {status}
-                    </div>
+                    <Alert message={status} type="success" showIcon className="mb-4" />
                 )}
 
-                <form onSubmit={submit}>
-                    <div>
-                        <InputLabel htmlFor="email" value="Email" />
+                {success && (
+                    <Alert message={success} type="success" showIcon className="mb-4" />
+                )}
 
-                        <TextInput
-                            id="email"
+                {error && (
+                    <Alert message={error} type="error" showIcon className="mb-4" />
+                )}
+
+                <Form
+                    layout="vertical"
+                    onSubmitCapture={submit}
+                >
+                    <Form.Item
+                        label="Email"
+                        validateStatus={errors.email && "error"}
+                        help={errors.email}
+                    >
+                        <Input
+                            prefix={<MailOutlined className="site-form-item-icon" />}
                             type="email"
                             name="email"
                             value={data.email}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            autoComplete="username"
-                            isFocused={true}
                             onChange={(e) => setData('email', e.target.value)}
                         />
+                    </Form.Item>
 
-                        <InputError message={errors.email} className="mt-2" />
-                    </div>
-
-                    <div className="mt-4">
-                        <InputLabel htmlFor="password" value="Mật Khẩu" />
-
-                        <TextInput
-                            id="password"
-                            type="password"
+                    <Form.Item
+                        label="Mật Khẩu"
+                        validateStatus={errors.password && "error"}
+                        help={errors.password}
+                    >
+                        <Input.Password
+                            prefix={<LockOutlined className="site-form-item-icon" />}
                             name="password"
                             value={data.password}
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            autoComplete="current-password"
                             onChange={(e) => setData('password', e.target.value)}
                         />
+                    </Form.Item>
 
-                        <InputError message={errors.password} className="mt-2" />
-                    </div>
-
-                    <div className="mt-4 flex items-center">
+                    <Form.Item>
                         <Checkbox
                             name="remember"
                             checked={data.remember}
                             onChange={(e) => setData('remember', e.target.checked)}
-                        />
-                        <span className="ml-2 text-sm text-gray-600">
+                        >
                             Nhớ tôi
-                        </span>
-                    </div>
+                        </Checkbox>
+                    </Form.Item>
 
                     {userKey && (
                         <div className="mt-4">
-                            <p className="text-sm text-gray-600">
+                            <Typography.Text type="secondary">
                                 Key người dùng: <strong>{userKey}</strong>
-                            </p>
+                            </Typography.Text>
                         </div>
                     )}
 
-                    <div className="mt-4 flex items-center justify-between">
-                        {canResetPassword && (
-                            <Link
-                                href={route('password.request')}
-                                className="text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            >
-                                Quên mật khẩu?
-                            </Link>
-                        )}
+                    <Form.Item>
+                        <div className="flex items-center justify-between">
+                            {canResetPassword && (
+                                <Link href={route('password.request')} className="text-sm text-gray-600 underline hover:text-gray-900">
+                                    Quên mật khẩu?
+                                </Link>
+                            )}
 
-                        <PrimaryButton className="ml-4" disabled={processing}>
-                            Đăng Nhập
-                        </PrimaryButton>
-                    </div>
-                </form>
+                            <Button type="primary" htmlType="submit" loading={processing}>
+                                Đăng Nhập
+                            </Button>
+                        </div>
+                    </Form.Item>
+                </Form>
             </div>
         </>
     );

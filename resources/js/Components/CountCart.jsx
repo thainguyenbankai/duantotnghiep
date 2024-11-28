@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { usePage, Link } from '@inertiajs/react';
-
+import { Link } from '@inertiajs/react';
 
 function CartCount() {
     const [cartCount, setCartCount] = useState(0);
     const [userId, setUserId] = useState(null);
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
     useEffect(() => {
         const fetchCartCount = async () => {
             try {
@@ -13,9 +13,9 @@ function CartCount() {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken, 
+                        'X-CSRF-TOKEN': csrfToken,
                     },
-                    credentials: 'include', 
+                    credentials: 'include',
                 });
 
                 if (!response.ok) {
@@ -31,7 +31,10 @@ function CartCount() {
         };
 
         fetchCartCount();
-    }, [csrfToken]); // Thêm csrfToken vào dependency array
+        const intervalId = setInterval(fetchCartCount, 1000); // Gọi API mỗi giây
+
+        return () => clearInterval(intervalId); // Dọn dẹp khi component bị unmount
+    }, [csrfToken]);
 
     return (
         <Link href={route('cart')} className="cursor-pointer flex items-center">
