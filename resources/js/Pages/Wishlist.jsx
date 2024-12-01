@@ -1,14 +1,12 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
-import { Table, Layout, Typography, Space, Button } from 'antd';
+import { Table, Layout, Typography, Space, Button, message } from 'antd';
 import { EyeOutlined, HeartOutlined } from '@ant-design/icons';
 
 const { Header, Content } = Layout;
 const { Title } = Typography;
 
-
-
-function LikedProducts({ likedProducts }) {
+function LikedProducts({ wishlists }) {
     const columns = [
         {
             title: 'Tên Sản Phẩm',
@@ -38,7 +36,7 @@ function LikedProducts({ likedProducts }) {
                             Xem chi tiết
                         </Button>
                     </Link>
-                    <Button type="danger" icon={<HeartOutlined />} onClick={() => handleUnLike(record.id)}>
+                    <Button type="danger" icon={<HeartOutlined />} onClick={() => handleUnLike(record.product.id)}>
                         Bỏ thích
                     </Button>
                 </Space>
@@ -46,9 +44,34 @@ function LikedProducts({ likedProducts }) {
         },
     ];
 
-    const handleUnLike = (productId) => {
-        console.log(`Bỏ thích sản phẩm: ${productId}`);
+    const handleUnLike = async (productId) => {
+        try {
+            const response = await fetch(`/api/favorites/${productId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                message.success(data.message);
+            } else {
+                message.error(data.message);
+            }
+        } catch (error) {
+            console.error('Error removing from favorites', error);
+            message.error('Lỗi xảy ra khi bỏ thích.');
+        }
     };
+
+    const dataSource = wishlists.map(wishlist => ({
+        id: wishlist.product.id,
+        name: wishlist.product.name,
+        price: wishlist.product.price,
+    }));
 
     return (
         <Layout className="layout">
@@ -59,7 +82,7 @@ function LikedProducts({ likedProducts }) {
             </Header>
             <Content className="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
                 <Table
-                    dataSource={likedProducts}
+                    dataSource={dataSource}
                     columns={columns}
                     rowKey="id"
                     pagination={false}
