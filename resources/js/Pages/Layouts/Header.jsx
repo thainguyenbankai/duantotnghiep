@@ -1,34 +1,39 @@
 import React, { useState } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { usePage, Link } from '@inertiajs/react';
-import { Dropdown, Menu, Button, Input, AutoComplete } from 'antd';
+import { Dropdown, Menu, Button, Input, AutoComplete, Drawer } from 'antd';
 import { SearchOutlined, HeartOutlined, UserOutlined, LoginOutlined, UserAddOutlined, BarsOutlined } from '@ant-design/icons';
 import GetListCategory from '@/Components/GetListCategory';
 import CartCount from '@/Components/CountCart';
 import SearchInput from '@/Components/SearchInput';
+
 const HeaderLayout = () => {
     const loginUrl = '/login';
     const registerUrl = '/register';
     const { props } = usePage();
     const user = props.auth.user;
     const [productResult, setProductResult] = useState([]);
+    const [drawerVisible, setDrawerVisible] = useState(false);
 
     const navigateTo = (url) => {
         window.location.href = `${window.location.origin}${url}`;
     };
 
- 
-
     const userMenu = (
         <Menu>
+            {user && user.status === 'admin' && (
+                <Menu.Item key="admin">
+                    <Link href={route('admin.index')}>Quản trị viên</Link>
+                </Menu.Item>
+            )}
             <Menu.Item key="profile">
                 <Link href={route('profile.edit')}>Hồ sơ cá nhân</Link>
             </Menu.Item>
             <Menu.Item key="order-history">
                 <Link href={route('order.history')}>Lịch sử mua hàng</Link>
             </Menu.Item>
-            <Menu.Item key="order-history">
-                <Link href={route('auth.newpassword')}>Đổi mật khẩu </Link>
+            <Menu.Item key="change-password">
+                <Link href={route('auth.newpassword')}>Đổi mật khẩu</Link>
             </Menu.Item>
             <Menu.Item key="logout">
                 <Link href={route('logout')} method="post" as="button">Đăng xuất</Link>
@@ -62,9 +67,14 @@ const HeaderLayout = () => {
         </Menu>
     );
 
+    const toggleDrawer = () => {
+        setDrawerVisible(!drawerVisible);
+    };
+
     return (
         <header className="bg-gray-900 text-gray-200">
-            <div className="py-2 px-4 bg-gray-800">
+            {/* Desktop Header */}
+            <div className="py-2 px-4 bg-gray-800 hidden lg:flex">
                 <div className="container mx-auto flex justify-between items-center">
                     <div className="flex items-center space-x-4 text-sm">
                         <div className="flex items-center">
@@ -89,6 +99,7 @@ const HeaderLayout = () => {
                 </div>
             </div>
 
+            {/* Main Header */}
             <div className="py-4 px-8 bg-white">
                 <div className="flex justify-between items-center">
                     <Link href={route('page.home')} className="cursor-pointer flex items-center">
@@ -100,24 +111,64 @@ const HeaderLayout = () => {
                     </div>
 
                     <div className="flex items-center space-x-4 text-gray-400">
-                        <Button icon={<HeartOutlined />} shape="circle" className="text-gray-400 hover:text-red-400" />
+                        <Link href={route('wishlist')} className="cursor-pointer flex items-center">
+                            <Button
+                                icon={<HeartOutlined />}
+                                shape="circle"
+                                className="text-gray-400 hover:text-red-400"
+                            />
+                        </Link>
                         <CartCount />
                     </div>
                 </div>
             </div>
 
-            <div className="bg-gray-800 py-3">
+            {/* Responsive Mobile Header */}
+            <div className="bg-gray-800 lg:hidden py-3">
+                <div className="flex justify-between items-center px-8">
+                    <Button icon={<BarsOutlined />} onClick={toggleDrawer} className="text-black" />
+                    <Drawer
+                        title="Menu"
+                        placement="left"
+                        closable={true}
+                        onClose={toggleDrawer}
+                        visible={drawerVisible}
+                        width={250}
+                    >
+                        <ul className="space-y-4">
+                            <Link className="block text-black hover:text-blue-400" href={route('page.home')}>Trang chủ</Link>
+                            <Link className="block text-black hover:text-blue-400" href={route('page.products')}>Sản phẩm</Link>
+                            <Link className="block text-black hover:text-blue-400" href={route('page.about')}>Giới thiệu</Link>
+                            <Link className="block text-black hover:text-blue-400" href={route('page.support')}>Hỗ Trợ</Link>
+                            {user ? (
+                                <Dropdown overlay={userMenu} trigger={['click']}>
+                                    <Button icon={<UserOutlined />} className="w-full text-black hover:text-blue-400">
+                                        Tài khoản
+                                    </Button>
+                                </Dropdown>
+                            ) : (
+                                <div>
+                                    <Button className="w-full mb-2" icon={<LoginOutlined />} onClick={() => navigateTo(loginUrl)}>Đăng nhập</Button>
+                                    <Button className="w-full" icon={<UserAddOutlined />} onClick={() => navigateTo(registerUrl)}>Đăng ký</Button>
+                                </div>
+                            )}
+                        </ul>
+                    </Drawer>
+                </div>
+            </div>
+
+            {/* Desktop Nav */}
+            <div className="bg-gray-800 py-3 hidden lg:block">
                 <div className="flex justify-between items-center px-8">
                     <Dropdown overlay={categoryMenu} trigger={['click']}>
                         <Button icon={<BarsOutlined />} className="text-gray-700 hover:text-blue-400" />
                     </Dropdown>
 
                     <ul className="flex space-x-8 text-sm text-white">
-                        <Link className='hover:text-blue-400' href={route('page.home')}>Trang chủ</Link>
-                        <Link className='hover:text-blue-400' href={route('page.products')}>Sản phẩm</Link>
-                        <Link className='hover:text-blue-400' href={route('page.about')}>Giới thiệu</Link>
-                        <Link className='hover:text-blue-400' href={route('page.support')}>Hỗ Trợ</Link>
-                        <Link className='hover:text-blue-400' href={route('page.contact')}>Liên hệ</Link>
+                        <Link className="hover:text-blue-400" href={route('page.home')}>Trang chủ</Link>
+                        <Link className="hover:text-blue-400" href={route('page.products')}>Sản phẩm</Link>
+                        <Link className="hover:text-blue-400" href={route('page.about')}>Giới thiệu</Link>
+                        <Link className="hover:text-blue-400" href={route('page.support')}>Hỗ Trợ</Link>
                     </ul>
 
                     <div className="flex space-x-4 items-center text-white">
@@ -129,7 +180,7 @@ const HeaderLayout = () => {
                         ) : (
                             <Dropdown overlay={userMenu} trigger={['click']}>
                                 <Button icon={<UserOutlined />} className="text-gray-700 hover:text-blue-400">
-                                    <span className="ml-2">{user.name}</span>
+                                    {/* <span className="ml-2">{user.name}</span> */}
                                 </Button>
                             </Dropdown>
                         )}

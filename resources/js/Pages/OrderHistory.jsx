@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, message } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import { Button, message, Spin } from 'antd';
+import { EyeOutlined } from '@ant-design/icons';
+import { Link, usePage } from '@inertiajs/react';
 
 const OrderHistory = () => {
+  const { props } = usePage();
+  const user = props.auth.user;
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState(null);
-  const [openDropdown, setOpenDropdown] = useState(null);
 
   // Format ngày giờ
   const formatDate = (dateString) => {
@@ -16,18 +17,13 @@ const OrderHistory = () => {
     return date.toISOString().split('T')[0];
   };
 
-  // Toggle dropdown (nếu cần)
-  const toggleDropdown = (orderId) => {
-    setOpenDropdown(openDropdown === orderId ? null : orderId);
-  };
-
-  // Gọi API để hủy đơn hàng
+  // Call API to cancel the order
   const cancelOrder = async (orderId) => {
     try {
       const response = await axios.delete(`/api/orders/${orderId}`);
       if (response.status === 200) {
         message.success('Đơn hàng đã được hủy thành công');
-        // Cập nhật lại danh sách đơn hàng sau khi hủy
+        // Update the order list after cancellation
         setOrders(orders.filter(order => order.id !== orderId));
       } else {
         message.error('Không thể hủy đơn hàng');
@@ -37,39 +33,48 @@ const OrderHistory = () => {
     }
   };
 
-  // Lấy danh sách đơn hàng từ API
+  // Fetch orders for the logged-in user
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get('/api/orders/history');
+        const response = await axios.get(`/api/orders/history?user_id=${user.id}`);
         if (response.status === 200) {
-          setOrders(response.data.orders);
+          let fetchedOrders = response.data.orders;
+
+          fetchedOrders = fetchedOrders.sort((a, b) => {
+            if (a.name_status === "Giao Hàng Thành công") return 1;
+            if (a.name_status === "Chờ xử lý") return -1;
+            if (b.name_status === "Giao Hàng Thành công") return -1;
+            return 0;
+          });
+
+          setOrders(fetchedOrders);
           setLoading(false);
         } else {
           setError('Không thể tải đơn hàng.');
           setLoading(false);
         }
       } catch (error) {
-        setError('Đã xảy ra lỗi khi tải đơn hàng.');
+        setError('Chưa có đơn hàng nào.');
         setLoading(false);
       }
     };
-    
-    fetchOrders();
-  }, []);
 
-  // Nếu đang tải dữ liệu
+    fetchOrders();
+  }, [user.id]);
+
+  // If loading
   if (loading) {
-    return <div className="text-center mt-10">Loading...</div>;
+    return <div className="text-center mt-10"><Spin /></div>;
   }
 
-  // Nếu có lỗi khi tải dữ liệu
+  // If error
   if (error) {
     return <div className="text-red-500 text-center mt-10">Error: {error}</div>;
   }
 
   return (
-    <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-6 sm:mt-8 container mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-6 sm:mt-8 container mx-auto px-4 sm:px-6 lg:px-8 mb-8 mt-2">
       <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
         <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
           <tr>
@@ -77,7 +82,7 @@ const OrderHistory = () => {
             <th scope="col" className="px-6 py-3">Tổng đơn hàng</th>
             <th scope="col" className="px-6 py-3">Trạng thái</th>
             <th scope="col" className="px-6 py-3">Ngày lên đơn</th>
-            <th scope="col" className="px-6 py-3">Hành động</th>
+            <th scope="col" className="px-6 py-3 ">Hành động</th>
           </tr>
         </thead>
         <tbody>
@@ -87,22 +92,40 @@ const OrderHistory = () => {
                 {order.id}
               </td>
               <td className="px-6 py-4 text-green-600 dark:text-green-400">
-                ${order.total_amount}
+                <span>{new Intl.NumberFormat('vi-VN').format(order.total_amount)} VNĐ</span>
+
               </td>
-              <td className="px-6 py-4 inline-flex items-center px-3 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+              <td className="px-6 py-4 inline-flex items-center px-3 py-1  text-purple-800 dark:bg-purple-900 dark:text-purple-300">
                 {order.name_status}
               </td>
               <td className="px-6 py-4 text-gray-900 dark:text-white">
                 {formatDate(order.created_at)}
               </td>
               <td className="px-6 py-4">
-                <Button
-                  type="danger"
-                  className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white border-red-600 border-2 hover:border-red-700 transition-all duration-300 mb-2"
-                  onClick={() => cancelOrder(order.id)}
-                >
-                  Hủy đơn hàng
-                </Button>
+              <Button
+  type="danger"
+  className={`w-full mr-5 sm:w-auto ${order.name_status === "Giao Hàng Thành công" || order.name_status === "Đang lấy hàng" ? "bg-light-400 border-light-400 text-gray-600 hover:bg-light-400" : "bg-red-600 hover:bg-red-700 text-white border-red-600 border-2 hover:border-red-700"} transition-all duration-300 mb-2`}
+  onClick={() => cancelOrder(order.id)}
+  disabled={order.name_status === "Giao Hàng Thành công" || order.name_status === "Đang lấy hàng"}
+>
+  Hủy đơn hàng
+</Button>
+
+
+                {/* Remove duplicate product IDs using Set */}
+                {order.products
+                  .map(product => product.id) // Get the product IDs
+                  .filter((value, index, self) => self.indexOf(value) === index) // Remove duplicates
+                  .map(productId => {
+                    const product = order.products.find(p => p.id === productId);
+                    return (
+                      <Link key={productId} href={route('products.show', { id: product.id })}>
+                        <Button type="primary" icon={<EyeOutlined />}>
+                          Xem chi tiết
+                        </Button>
+                      </Link>
+                    );
+                  })}
               </td>
             </tr>
           ))}

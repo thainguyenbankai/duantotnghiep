@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Layout, Select, Checkbox, Slider, Button, Card, Row, Col, Typography, Tag } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Select, Checkbox, Slider, Button, Card, Row, Col, Typography } from 'antd';
 import { ShopOutlined, FilterOutlined, DollarOutlined, StarOutlined, ReloadOutlined } from '@ant-design/icons';
 import ProductCard from '@/Components/ProductCard';
 import PageTitle from './Layouts/TitlePage';
@@ -9,7 +9,7 @@ const { Title } = Typography;
 
 const ProductPage = ({ products = [], brands = [], categories = [] }) => {
     const minPrice = products.length > 0 ? Math.min(...products.map(product => product.price)) : 0;
-    const maxPrice = products.length > 0 ? Math.max(...products.map(product => product.price)) : 20;
+    const maxPrice = products.length > 0 ? Math.max(...products.map(product => product.dis_price)) : 20;
 
     const [filteredProducts, setFilteredProducts] = useState(products);
     const [priceRange, setPriceRange] = useState([minPrice, maxPrice]);
@@ -104,22 +104,25 @@ const ProductPage = ({ products = [], brands = [], categories = [] }) => {
         <>
             <PageTitle title="Tất cả sản phẩm" />
             <Layout className="container mx-auto py-8 px-4">
-                <Row gutter={24}>
-                    <Col xs={24} md={6}>
+                <Row gutter={[24, 24]}>
+                    {/* Bộ lọc sản phẩm */}
+                    <Col xs={24} sm={8} md={6}>
                         <Card title={<><FilterOutlined className="mr-2" /> Bộ lọc sản phẩm</>} bordered={false}>
                             <div className="mb-4">
-                                <h3>Sắp xếp theo <ShopOutlined className="ml-2" /></h3>
+                                <h3 className="text-sm sm:text-base">Sắp xếp theo <ShopOutlined className="ml-2" /></h3>
                                 <Select
                                     onChange={handleSortChange}
                                     className="w-full"
                                     placeholder="Chọn sắp xếp"
+                                    size="large"
                                 >
                                     <Select.Option value="asc">Giá tăng dần</Select.Option>
                                     <Select.Option value="desc">Giá giảm dần</Select.Option>
                                 </Select>
                             </div>
+
                             <div className="mb-4">
-                                <h3>Danh mục</h3>
+                                <h3 className="text-sm sm:text-base">Danh mục</h3>
                                 <Checkbox.Group
                                     options={categories.map(category => ({ label: category.name, value: category.name }))}
                                     value={categoryFilters}
@@ -127,8 +130,9 @@ const ProductPage = ({ products = [], brands = [], categories = [] }) => {
                                     className="w-full"
                                 />
                             </div>
+
                             <div className="mb-4">
-                                <h3>Thương hiệu</h3>
+                                <h3 className="text-sm sm:text-base">Thương hiệu</h3>
                                 <Checkbox.Group
                                     options={brands.map(brand => ({ label: brand.name, value: brand.name }))}
                                     value={brandFilters}
@@ -136,8 +140,9 @@ const ProductPage = ({ products = [], brands = [], categories = [] }) => {
                                     className="w-full"
                                 />
                             </div>
+
                             <div className="mb-4">
-                                <h3>Giá <DollarOutlined className="ml-2" /></h3>
+                                <h3 className="text-sm sm:text-base">Giá <DollarOutlined className="ml-2" /></h3>
                                 <Slider
                                     range
                                     min={minPrice}
@@ -154,26 +159,34 @@ const ProductPage = ({ products = [], brands = [], categories = [] }) => {
                                     <span>{maxPrice}đ</span>
                                 </div>
                             </div>
-                            
+
                             <Button onClick={resetFilters} type="primary" icon={<ReloadOutlined />} className="w-full">
                                 Đặt lại bộ lọc
                             </Button>
                         </Card>
                     </Col>
-                    <Col xs={24} md={18}>
+
+                    {/* Danh sách sản phẩm */}
+                    <Col xs={24} sm={16} md={18}>
                         <Card title="Sản phẩm" bordered={false}>
                             <div
                                 style={{
-                                    maxHeight: 'calc(100vh - 10px)',
-                                    overflowY: 'auto',
                                     display: 'flex',
                                     flexWrap: 'wrap',
-                                    gap: '15px',
+                                    gap: '10px',
+                                    justifyContent: 'center',
                                 }}
                             >
                                 {filteredProducts.length > 0 ? (
                                     filteredProducts.map((product) => (
-                                        <div key={product.id} style={{ flex: '1 0 30%' }}>
+                                        <div
+                                            key={product.id}
+                                            style={{
+                                                flex: '1 0 50%', // Hiển thị 2 sản phẩm trên mỗi hàng trên mobile
+                                                maxWidth: 'calc(50% - 10px)', // Đảm bảo 2 sản phẩm mỗi hàng
+                                                marginBottom: '15px',
+                                            }}
+                                        >
                                             <ProductCard product={product} />
                                         </div>
                                     ))

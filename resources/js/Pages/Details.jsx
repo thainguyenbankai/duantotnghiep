@@ -1,242 +1,262 @@
 import React, { useEffect, useState } from 'react';
-import { Button, InputNumber, Typography, Row, Col, Card, Image, Tag, Space, notification } from 'antd';
-
+import { Button, Typography, Row, Col, Card, Carousel, Tag, Space, notification } from 'antd';
 import '../../css/Details.css';
 import Comment from '@/Components/Comment';
 
 const { Title, Text } = Typography;
+const csrfToken = document.head.querySelector('meta[name="csrf-token"]');
+
+if (csrfToken) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken.content;
+}
 
 const ProductDetail = ({ productData }) => {
     const [product, setProduct] = useState(productData || {});
     const [quantity, setQuantity] = useState(1);
-    const [options, setOptions] = useState([]);
-    const [colors, setColors] = useState([]);
-    const [selectedOption, setSelectedOption] = useState(null);
-    const [selectedColor, setSelectedColor] = useState(null);
+    const [selectedOptionId, setSelectedOptionId] = useState(null);
+    const [selectedColorId, setSelectedColorId] = useState(null);
     const [totalPrice, setTotalPrice] = useState(productData?.base_price || 0);
-    const [mainImage, setMainImage] = useState(productData?.image || '/default-image.jpg');
-    const [thumbnails, setThumbnails] = useState(productData?.thumbnails || []);
+    const [discountedPrice, setDiscountedPrice] = useState(productData?.dis_price || null);
 
     useEffect(() => {
         if (productData) {
             setProduct(productData);
-            setMainImage(productData.image || '/default-image.jpg');
-            setThumbnails(productData.thumbnails || []);
-            if (productData.options) {
-                const optionsArray = Object.entries(productData.options).map(([key, value]) => ({
-                    id: key, ...value
-                }));
-                setOptions(optionsArray);
-            }
-            if (productData.colors) {
-                const colorsArray = Object.entries(productData.colors).map(([key, value]) => ({
-                    id: key, ...value
-                }));
-                setColors(colorsArray);
-            }
+            setTotalPrice(productData.base_price);
+            setDiscountedPrice(productData.dis_price);
         }
     }, [productData]);
 
     useEffect(() => {
-        let newTotalPrice = product.base_price || 0;
-        if (selectedOption) {
-            newTotalPrice += parseFloat(selectedOption.price || 0);
+        const selectedVariant = product.variants?.find(
+            (variant) =>
+                variant.option?.id === selectedOptionId &&
+                variant.color?.id === selectedColorId
+        );
+
+        const variantPrice = selectedVariant ? selectedVariant.variant_price : product.base_price;
+
+        const variantDiscountPrice = selectedVariant?.dis_price || variantPrice;
+
+        const finalDiscountPrice = product.dis_price && product.dis_price < variantDiscountPrice
+            ? product.dis_price
+            : variantDiscountPrice;
+        setTotalPrice(variantPrice);
+
+        setDiscountedPrice(finalDiscountPrice);
+    }, [selectedOptionId, selectedColorId, product]);
+
+
+
+    const handleAddToCart = async () => {
+        if (!selectedOptionId || !selectedColorId) {
+            notification.warning({
+                message: 'Chọn đầy đủ thông tin',
+                description: 'Vui lòng chọn phiên bản và màu sắc trước khi thêm vào giỏ hàng.',
+            });
+            return;
         }
-        if (selectedColor) {
-            newTotalPrice += parseFloat(selectedColor.price || 0);
-        }
-        setTotalPrice(newTotalPrice);
-    }, [selectedOption, selectedColor, product.base_price]);
 
-    const handleQuantityChange = (value) => {
-        setQuantity(value);
-    };
+        const payload = {
+            product_id: product.id,
+            option_id: selectedOptionId,
+            color_id: selectedColorId,
+            quantity,
+            price: discountedPrice || totalPrice, // Sử dụng giá khuyến mãi hoặc giá giảm
+        };
 
-    const handleOptionClick = (optionId) => {
-        const option = options.find((opt) => opt.id === optionId);
-        setSelectedOption(option);
-    };
-
-    const handleThumbnailClick = (image) => {
-        setMainImage(image);
-    };
-
-    const fetchThumbnailColor = async (colorId) => {
         try {
-            const response = await fetch(`/api/colors/${colorId}/thumbnail`);
-            if (!response.ok) throw new Error('Failed to fetch color thumbnail');
-            const data = await response.json();
-            return data.thumbnail;
-        } catch (error) {
-            console.error('Error fetching color thumbnail:', error);
-            return null;
-        }
-    };
-
-    const handleColorClick = async (colorId) => {
-        const color = colors.find((col) => col.id === colorId);
-        setSelectedColor(color);
-        const fetchedThumbnails = await fetchThumbnailColor(colorId);
-        if (fetchedThumbnails && fetchedThumbnails.length > 0) {
-            setThumbnails(fetchedThumbnails.map(thumbnail => thumbnail.image_url));
-            setMainImage(fetchedThumbnails[0].image_url);
-        } else {
-            setThumbnails([]);
-            setMainImage('/default-image.jpg');
-        }
-    };
-
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-
-    const fetchAddToCart = async ({ Product_ID, Option_ID, Color_ID, quantity, totalPrice }) => {
-        try {
-            const response = await fetch('/products', {
+            const response = await fetch('/api/cart/add', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 },
-                body: JSON.stringify({
-                    Product_ID,
-                    Option_ID,
-                    Color_ID,
-                    quantity,
-                    totalPrice,
-                }),
+                body: JSON.stringify(payload),
             });
-            if (!response.ok) throw new Error('Failed to add to cart');
-            notification.success({
-                message: 'Thêm vào giỏ hàng thành công!',
-                description: `${product.name} đã được thêm vào giỏ hàng.`,
-                placement: 'topRight',
-            });
+
+            if (response.ok) {
+                const result = await response.json();
+                notification.success({
+                    message: 'Thành công!',
+                    description: result.success,
+                });
+            } else {
+                const error = await response.json();
+                notification.error({
+                    message: 'Thất bại',
+                    description: error.error || 'Không thể thêm vào giỏ hàng.',
+                });
+            }
         } catch (error) {
             notification.error({
-                message: 'Thêm vào giỏ hàng thất bại',
-                description: 'Đã xảy ra lỗi khi thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.',
-                placement: 'topRight',
+                message: 'Lỗi hệ thống',
+                description: 'Không thể kết nối tới máy chủ.',
             });
-            console.error('Error adding to cart:', error);
         }
     };
+    const handleCheckout = () => {
+        if (!selectedOptionId || !selectedColorId) {
+            notification.warning({
+                message: 'Chọn đầy đủ thông tin',
+                description: 'Vui lòng chọn phiên bản và màu sắc trước khi tiếp tục.',
+            });
+            return;
+        }
 
-    const handleAddToCart = () => {
-        fetchAddToCart({
-            Product_ID: product.id,
-            Option_ID: selectedOption?.id,
-            Color_ID: selectedColor?.id,
+        const checkoutProduct = {
+            id: product.id,
+            name: product.name,
+            price: totalPrice,
             quantity,
-            totalPrice,
-        });
+            option: product.variants?.find(variant => variant.option.id === selectedOptionId)?.option,
+            color: product.variants?.find(variant => variant.color.id === selectedColorId)?.color,
+        };
+
+        sessionStorage.setItem('checkoutItems', JSON.stringify([checkoutProduct]));
+        window.location.href = `${window.location.origin}/checkout`;
+    };
+
+    // Tìm các màu sắc tương ứng với thông số (RAM/ROM) đã chọn
+    const getColorsForSelectedOption = () => {
+        if (!selectedOptionId) return [];
+        return product.variants?.filter((variant) => variant.option.id === selectedOptionId)?.map(variant => variant.color) || [];
     };
 
     return (
-        <>
-            <div className="container overflow-hidden">
-                <div className="mx-20 p-4">
-                    <div className="flex items-center gap-5 animate-bounce font-bold text-black">
-                        <h2 className='text-3xl'>{product.name}</h2>
-                        <div class="text-yellow-500 ">
-                            ★★★★★
-                        </div>
-                    </div>
-                    <Row gutter={[16, 16]}>
-                        <Col xs={24} md={12}>
-                            <Card hoverable className="flex h-full justify-center">
-                                <div className="overflow-hidden">
-                                    <Image
-                                        src={mainImage ? `/storage/${mainImage}` : '/default-image.jpg'}
-                                        alt={product.name || 'Default Product'}
-                                        className="block mx-auto  img__details object-cover rounded-lg shadow-lg"
-                                        preview={false}
+        <div className="container mx-auto py-12 px-6">
+            <Row gutter={[24, 24]}>
+                {/* Hình ảnh sản phẩm */}
+                <Col xs={24} md={12}>
+                    <Card className="shadow-xl rounded-lg overflow-hidden">
+                        <Carousel autoplay effect="fade" className="rounded-lg">
+                            {product.images?.map((image, index) => (
+                                <div key={index} className="relative">
+                                    <img
+                                        src={`/storage/${image}`}
+                                        alt={product.name}
+                                        className="rounded-lg w-full h-96 object-cover transform hover:scale-105 transition-transform duration-500"
                                     />
                                 </div>
-                            </Card>
-                            <Space className="mt-4 gap-2">
-                                {thumbnails.map((thumbnail, index) => (
-                                    <Card
-                                        key={index}
-                                        hoverable
-                                        cover={<img alt={`thumbnail-${index}`} src={`/storage/${thumbnail}`} className="w-10 h-10" />}
-                                        className="thumbnail-card"
-                                        onClick={() => handleThumbnailClick(thumbnail)}
-                                    />
-                                ))}
-                            </Space>
-                        </Col>
-                        <Col xs={24} md={12}>
-                            <div className="container flex flex-col">
-                                <Text className="text-lg font-bold text-red-600 mb-4">
-                                    Giá: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice * quantity || 0)}
+                            )) || (
+                                    <div className="flex items-center justify-center h-96 bg-gray-200">
+                                        <span>Không có ảnh</span>
+                                    </div>
+                                )}
+                        </Carousel>
+                    </Card>
+                </Col>
+
+                {/* Thông tin sản phẩm */}
+                <Col xs={24} md={12} className="flex flex-col justify-between">
+                    <div className="product-info flex flex-col gap-6">
+                        <Title level={2} className="text-gray-800 font-semibold text-2xl">{product.name}</Title>
+
+                        <div className="text-lg font-bold text-red-600 flex items-center gap-4">
+                            {/* Hiển thị giá gốc nếu có giá giảm */}
+                            {discountedPrice && discountedPrice !== totalPrice && (
+                                <Text className="line-through text-gray-500 text-xl">
+                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice)}
                                 </Text>
-                                <Text className="text-gray-600 mb-4">{product.description || 'Mô tả sản phẩm'}</Text>
-                            </div>
+                            )}
 
-                            <div>
-                                <div className="product__options">
-                                    {options.map((option) => (
-                                        <Tag
-                                            key={option.id}
-                                            color={selectedOption === option ? 'blue' : 'default'}
-                                            className={` p-5 relative py-3 rounded-lg mr-2 cursor-pointer ${selectedOption === option ? 'bg-blue-500 text-white' : 'hover:bg-blue-100'
-                                                }`}
-                                            onClick={() => handleOptionClick(option.id)}
-                                        >
-                                            {selectedOption === option && (
-                                                <div className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center text-white text-xs">
-                                                    ✓
-                                                </div>
-                                            )}
-                                             <h2 className='text-sm text-black font-bold'>
-                                             {option.name}
-                                             </h2>
-                                            <p className='text-red-600'>{Number(option.price)} đ</p>
-                                        </Tag>
-                                    ))}
-                                </div>
-                            </div>
+                            {/* Hiển thị giá giảm giá hoặc giá khuyến mãi */}
+                            <Text className={`text-3xl font-semibold ${discountedPrice && discountedPrice !== totalPrice ? 'text-red-600' : ''}`}>
+                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(discountedPrice || totalPrice)}
+                            </Text>
 
-                            <div className="mt-5 flex  flex-col gap-2 product__colors mb-4">
-                               <h2 className='text-gray-800'>Chọn màu dưới đây: </h2>
-                                <div className="flex">
-                                    {colors.map((color) => (
-                                        <Tag
-                                            key={color.id}
-                                            color={selectedColor === color ? 'red' : 'default'}
-                                            className={`mr-2 cursor-pointer ${selectedColor === color ? 'bg-blue-500 text-white' : 'hover:bg-blue-100'}`}
-                                            onClick={() => handleColorClick(color.id)}
-                                        >
-                                            {color.name}
-                                        </Tag>
-                                    ))}
-                                </div>
-                            </div>
+                            {/* Hiển thị giá khuyến mãi nếu có */}
+                            {product.dis_price && product.dis_price < totalPrice && (
+                                <Text className="text-sm text-green-500">Giảm giá: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.dis_price)}</Text>
+                            )}
+                        </div>
 
-                            <div className="mb-4">
-                                <Text className="text-gray-700">Số lượng:</Text>
-                                <InputNumber
-                                    min={1}
-                                    value={quantity}
-                                    onChange={handleQuantityChange}
-                                    className="ml-2 w-16 border border-gray-300 rounded-md p-1"
-                                />
-                            </div>
 
+
+
+
+
+                        {/* Tùy chọn RAM/ROM */}
+                        <div className="flex gap-3">
+                            {product.variants
+                                ?.map((variant) => variant.option)
+                                ?.filter((option, index, self) => self.findIndex(o => o.id === option.id) === index)
+                                ?.map((option) => (
+                                    <Tag
+                                        key={option.id}
+                                        color={selectedOptionId === option.id ? 'blue' : 'default'}
+                                        className="cursor-pointer hover:bg-blue-600 hover:text-white transition-all duration-300"
+                                        onClick={() => setSelectedOptionId(option.id)}
+                                    >
+                                        {option.ram}GB / {option.rom}GB
+                                    </Tag>
+                                ))}
+                        </div>
+
+                        {/* Màu sắc (chỉ hiển thị khi chọn tùy chọn) */}
+                        <div className="flex gap-3">
+                            {getColorsForSelectedOption().map((color) => (
+                                <Tag
+                                    key={color.id}
+                                    color={selectedColorId === color.id ? 'red' : 'default'}
+                                    className="cursor-pointer hover:bg-red-600 hover:text-white transition-all duration-300"
+                                    onClick={() => setSelectedColorId(color.id)}
+                                >
+                                    {color.name}
+                                </Tag>
+                            ))}
+                        </div>
+
+                        {/* Số lượng */}
+                        <div className="flex items-center gap-4">
+                            <Text className="font-semibold text-lg">Số lượng:</Text>
+                            <input
+                                type="number"
+                                min={1}
+                                value={quantity}
+                                onChange={(e) => setQuantity(Number(e.target.value))}
+                                className="border rounded-md p-2 w-20 shadow-md"
+                            />
+                        </div>
+
+                        {/* Nút hành động */}
+                        <Space direction="vertical" className="w-full">
                             <Button
                                 type="primary"
-                                className="mt-4 w-full"
                                 size="large"
+                                className="w-full py-4 text-white font-semibold rounded-md shadow-lg hover:bg-blue-600 transition-all duration-300"
                                 onClick={handleAddToCart}
                             >
                                 Thêm vào giỏ hàng
                             </Button>
-                        </Col>
-                    </Row>
-                </div>
-                <Comment product={product} />
-            </div>
-        </>
+                            <Button
+                                onClick={handleCheckout}
+                                type="default"
+                                size="large"
+                                className="w-full py-4 text-black font-semibold rounded-md shadow-lg border-2 hover:bg-gray-100 transition-all duration-300"
+                            >
+                                Mua ngay
+                            </Button>
+                        </Space>
+                    </div>
+                </Col>
+            </Row>
+
+            {/* Mô tả sản phẩm */}
+            <Row className="mt-12">
+                <Col span={24}>
+                    <Card className="shadow-lg rounded-lg p-6">
+                        <Title level={4} className="text-gray-700">Mô tả sản phẩm</Title>
+                        <div
+                            className="prose lg:prose-xl"
+                            dangerouslySetInnerHTML={{
+                                __html: product.description || '<p>Thông tin sản phẩm đang được cập nhật.</p>',
+                            }}
+                        />
+                    </Card>
+                </Col>
+            </Row>
+            <Comment product={product} />
+        </div>
     );
 };
 

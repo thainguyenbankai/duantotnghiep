@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from '@inertiajs/react';
-import { Table, Layout, Typography, Space, Button, message } from 'antd';
+import { Table, Layout, Typography, Space, Button, message, Row, Col } from 'antd';
 import { EyeOutlined, HeartOutlined } from '@ant-design/icons';
+import axios from 'axios';
 
 const { Header, Content } = Layout;
 const { Title } = Typography;
 
-function LikedProducts({ wishlists }) {
+function LikedProducts({ wishlists: initialWishlists }) {
+    const [wishlists, setWishlists] = useState(initialWishlists);
+
     const columns = [
         {
             title: 'Tên Sản Phẩm',
@@ -36,7 +39,7 @@ function LikedProducts({ wishlists }) {
                             Xem chi tiết
                         </Button>
                     </Link>
-                    <Button type="danger" icon={<HeartOutlined />} onClick={() => handleUnLike(record.product.id)}>
+                    <Button type="danger" icon={<HeartOutlined />} onClick={() => handleUnLike(record.id)}>
                         Bỏ thích
                     </Button>
                 </Space>
@@ -46,24 +49,22 @@ function LikedProducts({ wishlists }) {
 
     const handleUnLike = async (productId) => {
         try {
-            const response = await fetch(`/api/favorites/${productId}`, {
-                method: 'DELETE',
+            const response = await axios.delete(`/api/favorites/${productId}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 }
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
-                message.success(data.message);
+            if (response.status === 200) {
+                message.success('Đã xóa sản phẩm khỏi danh sách yêu thích.');
+                setWishlists(prevWishlists => prevWishlists.filter(wishlist => wishlist.product.id !== productId));
             } else {
-                message.error(data.message);
+                message.error('Không thể xóa sản phẩm khỏi danh sách yêu thích.');
             }
         } catch (error) {
             console.error('Error removing from favorites', error);
-            message.error('Lỗi xảy ra khi bỏ thích.');
+            message.error('Lỗi xảy ra khi xóa sản phẩm khỏi danh sách yêu thích.');
         }
     };
 
@@ -75,20 +76,19 @@ function LikedProducts({ wishlists }) {
 
     return (
         <Layout className="layout">
-            <Header>
-                <Title level={2} className="text-white text-center">
-                    Danh Sách Sản Phẩm Yêu Thích
-                </Title>
-            </Header>
             <Content className="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-                <Table
-                    dataSource={dataSource}
-                    columns={columns}
-                    rowKey="id"
-                    pagination={false}
-                    bordered
-                    className="bg-white shadow-md rounded-lg"
-                />
+                <Row gutter={[16, 16]}>
+                    <Col xs={24}>
+                        <Table
+                            dataSource={dataSource}
+                            columns={columns}
+                            rowKey="id"
+                            pagination={false}
+                            bordered
+                            className="bg-white shadow-md rounded-lg w-full"
+                        />
+                    </Col>
+                </Row>
             </Content>
         </Layout>
     );

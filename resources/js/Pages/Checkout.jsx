@@ -25,7 +25,23 @@ const Checkout = () => {
 
   const [voucher, setVoucher] = useState('');
   const [shippingFee] = useState(32700);
-  const discount = voucher === 'SHOPEE20' ? 20000 : 0;
+  let discount = 0;
+  switch (voucher) {
+    case 'SHOPEE20':
+      discount = 20000;
+      break;
+    case 'SHOPEE21':
+      discount = 30000;
+      break;
+    case 'SHOPEE22':
+      discount = 40000;
+      break;
+    case 'SHOPEE23':
+      discount = 50000;
+      break;
+    default:
+      discount = 0;
+  }
   const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
   const totalAmount = totalPrice + shippingFee - discount;
 
@@ -117,10 +133,7 @@ const Checkout = () => {
         // Chuyển hướng người dùng đến VNPay để thanh toán
         window.location.href = vnpayUrl;
       } else {
-        // Nếu thanh toán khi nhận hàng, không xóa giỏ hàng ngay
         message.success('Đặt hàng thành công!');
-
-        // Xóa giỏ hàng chỉ khi thanh toán thành công hoặc chọn COD
         setCart([]);
         sessionStorage.removeItem('checkoutItems');
       }

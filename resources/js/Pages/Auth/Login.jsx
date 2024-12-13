@@ -1,23 +1,36 @@
 import { useEffect } from 'react';
 import { useForm, Head, Link } from '@inertiajs/react';
-import { Form, Input, Button, Checkbox, Typography, Alert } from 'antd';
+import { Form, Input, Button, Checkbox, Typography, message } from 'antd';
 import { MailOutlined, LockOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 
-export default function Login({ status, canResetPassword, userKey, success, error }) {
-    const { data, setData, post, processing, errors, reset } = useForm({
+export default function Login({ status, canResetPassword }) {
+    const { data, setData, post, processing, errors } = useForm({
         email: '',
         password: '',
         remember: false,
     });
 
+    useEffect(() => {
+        if (status) {
+            message.success(status);
+        }
+        if (errors) {
+            console.log(errors); 
+        }
+    }, [status, errors]);
+
+
     const submit = (e) => {
         e.preventDefault();
         post(route('login'), {
-            onFinish: () => reset('password'),
+            onError: (errors) => {
+                message.error(errors.email || 'Đăng nhập không thành công. Vui lòng kiểm tra lại.');
+            },
         });
     };
+
 
     return (
         <>
@@ -25,29 +38,14 @@ export default function Login({ status, canResetPassword, userKey, success, erro
             <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
                 <Title level={2} className="text-center">Đăng Nhập</Title>
 
-                {status && (
-                    <Alert message={status} type="success" showIcon className="mb-4" />
-                )}
-
-                {success && (
-                    <Alert message={success} type="success" showIcon className="mb-4" />
-                )}
-
-                {error && (
-                    <Alert message={error} type="error" showIcon className="mb-4" />
-                )}
-
-                <Form
-                    layout="vertical"
-                    onSubmitCapture={submit}
-                >
+                <Form layout="vertical" onSubmitCapture={submit}>
                     <Form.Item
                         label="Email"
                         validateStatus={errors.email && "error"}
                         help={errors.email}
                     >
                         <Input
-                            prefix={<MailOutlined className="site-form-item-icon" />}
+                            prefix={<MailOutlined />}
                             type="email"
                             name="email"
                             value={data.email}
@@ -61,7 +59,7 @@ export default function Login({ status, canResetPassword, userKey, success, erro
                         help={errors.password}
                     >
                         <Input.Password
-                            prefix={<LockOutlined className="site-form-item-icon" />}
+                            prefix={<LockOutlined />}
                             name="password"
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
@@ -78,14 +76,6 @@ export default function Login({ status, canResetPassword, userKey, success, erro
                         </Checkbox>
                     </Form.Item>
 
-                    {userKey && (
-                        <div className="mt-4">
-                            <Typography.Text type="secondary">
-                                Key người dùng: <strong>{userKey}</strong>
-                            </Typography.Text>
-                        </div>
-                    )}
-
                     <Form.Item>
                         <div className="flex items-center justify-between">
                             {canResetPassword && (
@@ -93,7 +83,6 @@ export default function Login({ status, canResetPassword, userKey, success, erro
                                     Quên mật khẩu?
                                 </Link>
                             )}
-
                             <Button type="primary" htmlType="submit" loading={processing}>
                                 Đăng Nhập
                             </Button>

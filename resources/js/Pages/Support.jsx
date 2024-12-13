@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 const WarrantySupportForm = () => {
   const [formData, setFormData] = useState({
     email: '',
     productName: '',
-    productCode: '',
-    document: '',
     requestPurpose: '',
-    gender: '',
   });
 
   const handleChange = (e) => {
@@ -17,7 +15,16 @@ const WarrantySupportForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(formData);
+
+    // Gửi yêu cầu POST tới API Laravel
+    axios.post('api/send-warranty-support', formData)
+      .then(response => {
+        alert('Gửi thành công');
+      })
+      .catch(error => {
+        console.error('Có lỗi xảy ra khi gửi email', error);
+        alert('Gửi thất bại');
+      });
   };
 
   return (
@@ -46,7 +53,7 @@ const WarrantySupportForm = () => {
               />
             </div>
             <div>
-              <label className="block">Thông tin về sản phẩm:</label>
+              <label className="block">Thông tin về sản phẩm</label>
               <input
                 type="text"
                 name="productName"
@@ -56,26 +63,10 @@ const WarrantySupportForm = () => {
                 required
                 className="w-full border border-gray-300 rounded p-2 mb-2"
               />
-              <input
-                type="text"
-                name="productCode"
-                placeholder="Mã sản phẩm"
-                value={formData.productCode}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded p-2"
-              />
             </div>
+
             <div>
-              <label className="block">Tài liệu bổ sung:</label>
-              <input
-                type="file"
-                name="document"
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded p-2"
-              />
-            </div>
-            <div>
-              <label className="block">Mục đích yêu cầu:</label>
+              <label className="block">Nội dung chi tiết</label>
               <textarea
                 name="requestPurpose"
                 placeholder="Nêu rõ yêu cầu của bạn"

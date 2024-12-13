@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button, Checkbox, List, InputNumber, Typography, message } from 'antd';
 
-
 const { Title, Text } = Typography;
 
 const CartList = ({ cartItems }) => {
@@ -15,6 +14,7 @@ const CartList = ({ cartItems }) => {
             return selectedItems[index] ? acc + item.price * item.quantity : acc;
         }, 0);
     }, [selectedItems, allProducts]);
+
     useEffect(() => {
         setTotalPrice(calculateTotalPrice);
     }, [calculateTotalPrice]);
@@ -36,9 +36,7 @@ const CartList = ({ cartItems }) => {
     };
 
     const handleRemoveSelected = async () => {
-        const idsToRemove = allProducts
-            .filter((_, index) => selectedItems[index])
-            .map(item => item.id);
+        const idsToRemove = allProducts.filter((_, index) => selectedItems[index]).map(item => item.id);
         if (idsToRemove.length > 0) {
             const updatedProducts = allProducts.filter(item => !idsToRemove.includes(item.id));
             setAllProducts(updatedProducts);
@@ -69,10 +67,12 @@ const CartList = ({ cartItems }) => {
     const updateQuantity = useCallback(
         async (itemId, newQuantity) => {
             if (newQuantity < 1) return;
-            const updatedProducts = allProducts.map(item => (
+            const originalProducts = [...allProducts];
+            const updatedProducts = allProducts.map(item =>
                 item.id === itemId ? { ...item, quantity: newQuantity } : item
-            ));
+            );
             setAllProducts(updatedProducts);
+
             try {
                 const response = await fetch(`/api/cart/quantity`, {
                     method: 'POST',
@@ -83,26 +83,28 @@ const CartList = ({ cartItems }) => {
                     body: JSON.stringify({ id: itemId, quantity: newQuantity }),
                 });
                 if (!response.ok) {
+                    setAllProducts(originalProducts);
                     showMessage('Cập nhật số lượng không thành công.', 'error');
                 }
             } catch (error) {
                 console.error('Error updating quantity:', error);
+                setAllProducts(originalProducts);
+                showMessage('Đã xảy ra lỗi khi cập nhật số lượng.', 'error');
             }
         },
         [csrfToken, allProducts]
     );
 
+
     const handleCheckout = () => {
-        const selectedItemsToCheckout = allProducts
-            .filter((_, index) => selectedItems[index])
-            .map(item => ({
-                id: item.product.id,
-                name: item.product.name,
-                price: item.price,
-                quantity: item.quantity,
-                option: item.option_name,
-                color: item.color_name,
-            }));
+        const selectedItemsToCheckout = allProducts.filter((_, index) => selectedItems[index]).map(item => ({
+            id: item.product.id,
+            name: item.product.name,
+            price: item.price,
+            quantity: item.quantity,
+            option: item.option_name,
+            color: item.color_name,
+        }));
         if (selectedItemsToCheckout.length > 0) {
             sessionStorage.setItem('checkoutItems', JSON.stringify(selectedItemsToCheckout));
             window.location.href = `${window.location.origin}/checkout`;
@@ -113,19 +115,28 @@ const CartList = ({ cartItems }) => {
 
     return (
         <>
-            <div className="container mx-auto px-6 py-10">
-                <Title level={2} className="text-center mb-8">Giỏ hàng của bạn</Title>
+            <div className="container mx-auto px-6 py-10 bg-white rounded-lg shadow-md">
+                <Title level={2} className="text-center mb-8"><i className="fas fa-shopping-cart"></i> Giỏ hàng của bạn</Title>
                 <div className="flex justify-between mb-6">
-                    <Button onClick={handleSelectAll} type="primary">
-                        {selectAll ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
-                    </Button>
                     <Button
                         onClick={handleRemoveSelected}
                         type="danger"
                         style={{ backgroundColor: '#f5222d', borderColor: '#f5222d', color: '#fff' }}
+                        className="hover:bg-red-700 transition-colors duration-300"
+                        disabled={selectedItems.every(item => !item)}
                     >
-                        Xóa đã chọn
+                        <i className="fas fa-trash-alt"></i> Xóa đã chọn
                     </Button>
+                    <Button
+                        onClick={handleSelectAll}
+                        type="primary"
+                        disabled={allProducts.length === 0}
+                        style={{ backgroundColor: '#4CAF50', borderColor: '#4CAF50' }}
+                        className="hover:bg-green-700 transition-colors duration-300"
+                    >
+                        {selectAll ? <i className="fas fa-times"></i> : <i className="fas fa-check"></i>} {selectAll ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                    </Button>
+
                 </div>
 
                 {allProducts.length > 0 ? (
@@ -135,32 +146,41 @@ const CartList = ({ cartItems }) => {
                         renderItem={(item, index) => (
                             <List.Item
                                 key={item.id}
-                                style={{
-                                    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-                                    border: '1px solid #e0e0e0',
-                                    borderRadius: '8px',
-                                    padding: '16px',
-                                    marginBottom: '16px'
-                                }}
+                                className="bg-gray-100 p-4 rounded-lg mb-4 shadow-sm hover:shadow-md transition-shadow duration-300"
                             >
                                 <Checkbox
                                     checked={selectedItems[index]}
                                     onChange={() => handleItemSelect(index)}
+                                    className="mr-3"
                                 />
                                 <List.Item.Meta
-                                    style={{ width: 3000, height: 150 }}
                                     avatar={
-                                        <img
-                                            src={`/storage/${item.product?.image || '/default-image.jpg'}`}
-                                            alt={item.product?.name}
-                                            style={{ width: 150, height: 150, borderRadius: '8px' }}
-                                        />
+                                        Array.isArray(item.product?.images) && item.product.images.length > 0 ? (
+
+                                            <div className="product-carousel">
+
+                                                {item.product.images.map((image, index) => (
+                                                    <div key={index} className="product-carousel-item">
+                                                        <img
+                                                            src={`/storage/${image[0]}`}
+                                                            alt={item.product.name}
+                                                            className="rounded-lg w-full h-[400px] object-cover"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-center h-[130px] bg-gray-200">
+                                                <span>Không có ảnh</span>
+                                            </div>
+                                        )
                                     }
-                                    title={item.product?.name}
+
+                                    title={<Text strong>{item.product?.name}</Text>}
                                     description={
                                         <div className="flex flex-col">
-                                            <div className="flex flex-wrap items-center mb-2">
-                                                <Text strong>Số lượng: </Text>
+                                            <div className="flex items-center mb-2">
+                                                <Text strong>Số lượng:</Text>
                                                 <InputNumber
                                                     min={1}
                                                     value={item.quantity}
@@ -168,15 +188,15 @@ const CartList = ({ cartItems }) => {
                                                     className="ml-2"
                                                 />
                                                 <Text className="text-red-500 ml-4">
-                                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
+                                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}
                                                 </Text>
                                             </div>
-                                            <div className="flex flex-wrap items-center mb-2">
-                                                <Text strong>Tùy chọn: </Text>
+                                            <div className="flex items-center mb-2">
+                                                <Text strong>Tùy chọn:</Text>
                                                 <Text className="ml-2">{item.option_name}</Text>
                                             </div>
-                                            <div className="flex flex-wrap items-center mb-2">
-                                                <Text strong>Màu sắc: </Text>
+                                            <div className="flex items-center mb-2">
+                                                <Text strong>Màu sắc:</Text>
                                                 <Text className="ml-2">{item.color_name}</Text>
                                             </div>
                                         </div>
@@ -185,18 +205,19 @@ const CartList = ({ cartItems }) => {
                             </List.Item>
                         )}
                     />
+
                 ) : (
                     <Text type="secondary" className="text-center">Giỏ hàng của bạn hiện tại trống</Text>
                 )}
                 <div className="mt-10 flex justify-between items-center">
-                    <Title level={3}>Tổng tiền: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice)}</Title>
-                    <Button onClick={handleCheckout} type="primary" size="large">
-                        Thanh toán
-
+                    <Title level={3}><i className="fas fa-money-bill-wave"></i> Tổng tiền: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice)}</Title>
+                    <Button onClick={handleCheckout} type="primary" size="large" style={{ backgroundColor: '#4CAF50', borderColor: '#4CAF50' }} className="hover:bg-green-700 transition-colors duration-300">
+                        <i className="fas fa-credit-card"></i> Thanh toán
                     </Button>
                 </div>
             </div>
         </>
     );
 };
+
 export default CartList;

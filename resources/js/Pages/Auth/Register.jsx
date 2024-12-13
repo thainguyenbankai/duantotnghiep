@@ -1,5 +1,5 @@
 import { useForm, Head, Link } from '@inertiajs/react';
-import { Form, Input, Button, Typography, Alert } from 'antd';
+import { Form, Input, Button, Typography, Alert, message } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import GuestLayout from '@/Layouts/GuestLayout';
 
@@ -12,12 +12,22 @@ export default function Register() {
         password: '',
         password_confirmation: '',
     });
-
+   
     const submit = (e) => {
         e.preventDefault();
 
         post(route('register'), {
-            onFinish: () => reset('password', 'password_confirmation'),
+            onSuccess: () => {
+                message.success('Đăng ký thành công. Vui lòng kiểm tra email của bạn.');
+                reset('password', 'password_confirmation');
+            },
+            onError: (formErrors) => {
+                if (formErrors.error) {
+                    message.error(formErrors.error);
+                } else {
+                    message.error('Đăng ký không thành công. Vui lòng kiểm tra lại.');
+                }
+            },
         });
     };
 

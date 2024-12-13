@@ -50,7 +50,15 @@ class CategoryController extends Controller
         $request->validate([
             'name' => 'required|string|max:225',
             'description' => 'required|string|max:255',
+        ], [
+            'name.required' => 'Tên sản phẩm là bắt buộc.',
+            'name.string' => 'Tên sản phẩm phải là chuỗi ký tự.',
+            'name.max' => 'Tên sản phẩm không được vượt quá 225 ký tự.',
+            'description.required' => 'Mô tả sản phẩm là bắt buộc.',
+            'description.string' => 'Mô tả sản phẩm phải là chuỗi ký tự.',
+            'description.max' => 'Mô tả sản phẩm không được vượt quá 255 ký tự.',
         ]);
+        
 
         $data = $request->all();
         $data['user_id'] = Auth::id();
@@ -80,8 +88,16 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:225',
-            'description' => 'nullable|string|max:255',
+            'description' => 'required|string|max:255',
+        ], [
+            'name.required' => 'Tên danh mục là bắt buộc.',
+            'name.string' => 'Tên danh mục phải là chuỗi ký tự.',
+            'name.max' => 'Tên danh mục không được vượt quá 225 ký tự.',
+            'description.required' => 'Mô tả danh mục là bắt buộc.',
+            'description.string' => 'Mô tả danh mục phải là chuỗi ký tự.',
+            'description.max' => 'Mô tả danh mục không được vượt quá 255 ký tự.',
         ]);
+        
 
         $categories = Category::findOrFail($id);
         $categories->update($request->all());
@@ -99,5 +115,19 @@ class CategoryController extends Controller
         $category->delete();
 
         return redirect()->route('admin.categories.index')->with('success', 'Xóa danh mục thành công');
+    }
+    public function trash_category() {
+        $categories = Category::onlyTrashed()->paginate(10);
+        return view('admin.Category.trash', compact('categories'));
+    }
+    public function restore_category($id) {
+        $category = Category::withTrashed()->where('id', $id)->first();
+        $category->restore();
+        return redirect()->back()->with('success', 'Khôi phục danh mục thành công!');
+    }
+    public function delete_category($id) {
+        $category = Category::withTrashed()->where('id', $id)->first();
+        $category->forceDelete();
+        return redirect()->back()->with('success', 'Xóa danh mục vĩnh viễn thành công!');
     }
 }

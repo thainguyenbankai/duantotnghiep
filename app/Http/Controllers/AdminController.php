@@ -2,22 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Brand;
 use App\Models\Category;
+use App\Models\OrderUser;
+use App\Models\Product;
+use App\Models\Reviews;
 use App\Models\User;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::all();
-        return view('admin.index', compact('users'));
+        $search = $request->get('search');
+
+        $users = User::when($search, function ($query, $search) {
+            return $query->where('name', 'like', "%$search%");
+        })->get();
+
+        return view('admin.Customers.index', compact('users', 'search'));
     }
 
-    public function rec_user()
-    {
-        return view('admin.index', compact('users'));
-    }
     public function rec_category()
     {
         return view('admin.Category.index');
@@ -44,6 +49,29 @@ class AdminController extends Controller
         $user->keyy = $request->input('keyy');
         $user->save();
 
-        return redirect()->route('admin.index')->with('success', 'Trạng thái người dùng đã được cập nhật.');
+        return redirect()->route('admin.users.index')->with('success', 'Trạng thái người dùng đã được cập nhật.');
+    }
+
+    public function dashboard()
+    {
+        $totalUser = User::count();
+        $totalView = Product::sum('view');
+        $totalBrand = Brand::count();
+        $totalOrder = OrderUser::count();
+        $totalProduct = Product::count();
+        $totalCategory = Category::count();
+        $totalPrice = OrderUser::sum('total_amount');
+        $totalReview = Reviews::count();
+
+        return view('admin.index', compact(
+            'totalOrder',
+            'totalProduct',
+            'totalCategory',
+            'totalPrice',
+            'totalReview',
+            'totalBrand',
+            'totalView',
+            'totalUser'
+        ));
     }
 }

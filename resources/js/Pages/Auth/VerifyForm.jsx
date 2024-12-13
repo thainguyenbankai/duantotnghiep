@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Head, useForm } from '@inertiajs/react';
+import { message } from 'antd';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -11,6 +12,15 @@ export default function VerifyForm({ status, email }) {
         code: '',
     });
 
+    useEffect(() => {
+        if (status) {
+            message.success(status); // Hiển thị thông báo thành công nếu có status
+        }
+        if (errors.code) {
+            message.error(errors.code); // Hiển thị thông báo lỗi nếu có lỗi
+        }
+    }, [status, errors.code]);
+
     const submit = (e) => {
         e.preventDefault();
 
@@ -19,8 +29,13 @@ export default function VerifyForm({ status, email }) {
                 email: data.email,
                 code: data.code,
             },
-            onFinish: () => setData('code', ''), // Reset verification code
-            onError: (error) => console.log(error), // Handle error
+            onFinish: () => {
+                setData('code', ''); // Reset verification code
+                message.success('Xác minh thành công!'); // Hiển thị thông báo thành công
+            },
+            onError: (error) => {
+                message.error('Xác minh không thành công. Vui lòng kiểm tra lại mã.'); // Hiển thị thông báo lỗi
+            },
         });
     };
 

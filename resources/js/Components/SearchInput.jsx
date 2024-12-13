@@ -46,7 +46,7 @@ const SearchInput = () => {
     }, [searchTerm]);
 
     return (
-        <div className="relative w-full max-w-lg mx-auto">
+        <div className="relative w-full max-w-lg mx-auto mr-2">
             <input
                 type="text"
                 placeholder="Tìm kiếm..."
@@ -55,7 +55,6 @@ const SearchInput = () => {
                 onKeyPress={handleKeyPress}
                 className="w-full border border-gray-300 rounded-full py-2 px-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:border-green-500 transition duration-300 ease-in-out shadow-sm"
             />
-            <i className="fas fa-search absolute top-3 right-4 text-gray-400"></i>
 
             {loading && <p className="mt-2 text-gray-500">Đang tìm kiếm...</p>}
 

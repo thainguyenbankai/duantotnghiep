@@ -13,10 +13,9 @@ use App\Models\Category;
 use App\Models\Favorites;
 use App\Models\OrderUser;
 use App\Models\ProductCart;
+use App\Models\ProductVariant;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Models\ProductOptions;
-use App\Models\ThumbnailColors;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -35,13 +34,15 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\Auth\VerificationController;
-
+use App\Http\Controllers\ColorController;
+use App\Http\Controllers\OptionController;
+use App\Http\Controllers\MailController;
 
 Route::get('/show-verify', function () {
     return Inertia::render('Auth/VerifyForm');
 })->name('verify.form');
 Route::post('/verify', [VerificationController::class, 'verify'])->name('auth.verify');
-
+Route::post('api/send-warranty-support', [MailController::class, 'sendWarrantySupportEmail']);
 
 Route::get(
     '/newpassword',
@@ -49,33 +50,28 @@ Route::get(
     Inertia::render('Auth/ResetPassword')
 )->name('auth.newpassword');
 
-
 Route::post('/api/newpassword', function (Request $request) {
-    // $validator = Validator::make($request->all(), [
-    //     'email' => 'required|email',
-    //     'old_password' => 'required|string',
-    //     'new_password' => 'required|string|confirmed',
-    // ]);
-
-    // if ($validator->fails()) {
-    //     return response()->json(['errors' => $validator->errors()], 422);
-    // }
+    $isReset = $request->input('isReset', false);
 
     $user = User::where('email', $request->email)->first();
 
     if (!$user) {
-        return response()->json(['message' => 'Email không hợp lệ'], 404);
+        return response()->json(['message' => 'Invalid email'], 404);
     }
 
-    if (!Hash::check($request->old_password, $user->password)) {
-        return response()->json(['message' => 'Mật khẩu cũ không đúng'], 401);
+    // Nếu là yêu cầu đổi mật khẩu, kiểm tra mật khẩu cũ
+    if (!$isReset) {
+        if (!Hash::check($request->old_password, $user->password)) {
+            return response()->json(['message' => 'Old password is incorrect'], 401);
+        }
     }
 
-    $user->password = Hash::make($request->new_password);
+    $user->password = Hash::make($request->password); // Sử dụng 'password' thay vì 'new_password' để trùng khớp với tên field ở frontend
     $user->save();
 
-    return response()->json(['message' => 'Đổi mật khẩu thành công']);
+    return response()->json(['message' => 'Password changed successfully']);
 })->name('new.password');
+
 
 Route::post('/api/favorites', function (Request $request) {
     $user = Auth::user();
@@ -96,6 +92,17 @@ Route::post('/api/favorites', function (Request $request) {
         return response()->json(['message' => 'Sản phẩm đã được thêm vào danh sách yêu thích'], 200);
     }
     return response()->json(['message' => 'Vui lòng đăng nhập để tiếp tục'], 401);
+});
+Route::delete('api/favorites/{productID}', function (string $productId) {
+    $user = Auth::user();
+    $favorite = Favorites::where('user_id', $user->id)
+        ->where('product_id', $productId)
+        ->first();
+    if (!$favorite) {
+        return response()->json(['message' => 'Không tìm thấy sản phẩm trong danh sách yêu thích.'], 404);
+    }
+    $favorite->delete();
+    return response()->json(['message' => 'Đã xóa sản phẩm khỏi danh sách yêu thích.'], 200);
 });
 
 Route::get('verify-email/{token?}/{email?}', function ($token = null, $email = null) {
@@ -128,6 +135,7 @@ Route::get('verify-email/{token?}/{email?}', function ($token = null, $email = n
         'success' => 'Xác minh thành công vui lòng đăng nhập',
     ]);
 });
+Route::post('api/products/{id}/view', [ProductController::class, 'increaseViewCount']);
 
 
 
@@ -169,7 +177,6 @@ Route::post('/admin/addoption', function (Request $request) {
 Route::post('/admin/addcolor', function (Request $request) {
     $option = Colors::create([
         'name' => $request->color_name,
-        'price' => $request->color_price,
     ]);
     return response()->json(["message" => "thêm color thành công"], 200);
 })->name('admin.colors.store');
@@ -257,13 +264,15 @@ Route::get('/api/comments/stats/{productId}', function ($productId) {
     $ratings = Reviews::select('rating')
         ->where('product_id', $productId)
         ->groupBy('rating')
+        ->where('status', 1)
         ->orderBy('rating', 'desc')
         ->get()
         ->map(function ($review) {
             return [
                 'stars' => $review->rating,
-                'count' => Reviews::where('rating', $review->rating)
-
+                'count' => Reviews::where('product_id', $productId)
+                    ->where('rating', $review->rating)
+                    ->where('status', 1)
                     ->count(),
             ];
         });
@@ -284,6 +293,7 @@ Route::post("/api/comments", function (Request $request) {
         'review_text' => $validatedData['review_text'],
         'user_id' => $validatedData['user_id'],
         'product_id' => $validatedData['product_id'],
+        'status' => 1,
     ]);
 
     return response()->json([
@@ -296,15 +306,12 @@ Route::post("/api/comments", function (Request $request) {
 
 Route::post('/api/order', function (Request $request) {
 
-
-    // Extract data
     $address = $request->input('address');
     $cart = $request->input('cart');
     $paymentMethod = $request->input('paymentMethod');
     $totalAmount = $request->input('totalAmount');
     $orderCode = $request->input('orderCode');
 
-    // Create order
     try {
         $order = OrderUser::create([
             'user_id' => $address['user_id'],
@@ -404,11 +411,29 @@ Route::post('/api/orders', function (Request $request) {
     $order->street = $orderData['address']['street'];
     $order->payment_method = $orderData['paymentMethod'];
     $order->total_amount = $orderData['totalAmount'];
-    $order->status_id = 1;  // Trạng thái đơn hàng (ví dụ: "Chờ xử lý")
+    $order->status_id = 1;
     $order->order_code = strtoupper(Str::random(10));
     $order->products = json_encode($orderData['cart']);  // Lưu danh sách sản phẩm dưới dạng JSON
     $order->save();
+    foreach ($orderData['cart'] as $item) {
+        $product = Product::find($item['id']);
+        if ($product && $product->quantity >= $item['quantity']) {
+            $product->quantity -= $item['quantity'];
+            $product->save();
+        } else {
+            return response()->json([
+                'error' => 'Số lượng sản phẩm không đủ cho sản phẩm ID: ' . $item['id']
+            ], 400);
+        }
+    }
+    $productIdsInCart = array_column($orderData['cart'], 'id');
+    DB::table('product_cart')
+        ->where('user_id', $user_id)
+        ->whereIn('product_id', $productIdsInCart)
+        ->delete();
+
     if ($orderData['paymentMethod'] === 'bank') {
+
         $paymentData = [
             'user_id' => $user_id,
             'order_id' => $order->id,
@@ -453,14 +478,12 @@ Route::get('/vnpay/return', function (Request $request) {
                 $payment->vnp_response_code =  $vnp_ResponseCode;
                 $payment->save();
             }
-            // return response()->json(["message" => "Payment successful, Order ID: $vnp_TxnRef"], 200);
-            // return redirect()->route('orders.history')->with('message', 'Thanh toán thành công !');
-            return Inertia::render('OrderHistory', ['message' => "Thanh toan thành công"]);
+            return Inertia::render('OrderHistory', ['message' => "Thanh toán thành công"]);
         } else {
-            return response()->json(["message" => "Payment failed, please try again."], 400);
+            return response()->json(["message" => "Thanh toán thất bại"], 400);
         }
     } else {
-        return response()->json(["message" => "Invalid response signature"], 400);
+        return response()->json(["message" => "Trạng thái sai"], 400);
     }
 })->name('vnpay.return');
 
@@ -539,76 +562,21 @@ Route::get('/api/orders/history', function () {
     return response()->json(['orders' => $ordersWithStatus], 200);
 })->name('orders.history');
 
+Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
 
-Route::get('/products/{id}', function ($id) {
-    $product = Product::findOrFail($id);
-
-    $options_id = [];
-    if (is_string($product->options_id)) {
-        $decodedOptions = json_decode($product->options_id, true);
-        if (is_array($decodedOptions)) {
-            $options_id = array_merge($options_id, $decodedOptions);
-        }
-    }
-    $colors_id = [];
-    if (is_string($product->colors_id)) {
-        $decodedColors = json_decode($product->colors_id, true);
-        if (is_array($decodedColors)) {
-            $colors_id = array_merge($colors_id, $decodedColors);
-        }
-    }
-    $options = [];
-    foreach ($options_id as $option_id) {
-        $option = Options::find($option_id);
-        if ($option) {
-            $options[$option->id] = [
-                'name' => $option->name,
-                'price' => $option->price,
-            ];
-        }
-    }
-    $colors = [];
-    foreach ($colors_id as $color_id) {
-        $color = Colors::find($color_id);
-        if ($color) {
-            $colors[$color->id] = [
-                'name' => $color->name,
-                'price' => $color->price,
-            ];
-        }
-    }
-    $productData = [
-        'id' => $product->id,
-        'name' => $product->name,
-        'description' => $product->description,
-        'base_price' => $product->price,
-        'image' => $product->image,
-        'options' => $options,
-        'colors' => $colors,
-    ];
-    return Inertia::render('Details', ['productData' => $productData]);
-})->name('products.show');
-
-
-
-Route::get('/wishlist', function() {
+Route::get('/wishlist', function () {
     $user_id = Auth::id();
     if ($user_id) {
         $wishlists = Favorites::with('product')->where('user_id', $user_id)->get();
-  
+
         return Inertia::render('Wishlist', ['wishlists' => $wishlists]);
     } else {
-        return redirect()->route('login'); 
+        return redirect()->route('login');
     }
 })->name('wishlist');
 
 
 
-// get thumbnail của color
-Route::get('/api/colors/{id}/thumbnail', function ($id) {
-    $image = ThumbnailColors::where('color_id', $id)->get();
-    return response()->json(array('thumbnail' => $image));
-});
 
 
 
@@ -642,7 +610,7 @@ Route::get('/contact', function () {
 // ====Cart=====
 Route::get('/cart', function () {
     $userId = Auth::id();
-    $cartItems = ProductCart::with(['product:id,image,name', 'option:id,name'])
+    $cartItems = ProductCart::with(['product:id,images,name', 'option:id,ram,rom',  'color:id,name'])
         ->where('user_id', $userId)
         ->get()
         ->map(function ($cartItem) {
@@ -652,7 +620,7 @@ Route::get('/cart', function () {
                 'quantity' => $cartItem->quantity,
                 'price' => $cartItem->price,
                 'product' => $cartItem->product,
-                'option_name' => $cartItem->option ? $cartItem->option->name : null,
+                'option_name' => $cartItem->option ? $cartItem->option->ram . 'GB / ' . $cartItem->option->rom . 'GB' : null,
                 'color_name' => $cartItem->color ? $cartItem->color->name : null,
             ];
         });
@@ -735,32 +703,69 @@ Route::post('/api/cart/quantity', function (Request $request) {
 
 
 Route::post('/api/cart/add', function (Request $request) {
-    $product = Product::find($request->id);
-    if (!$product) {
-        return response()->json(['error' => 'Sản phẩm không tồn tại'], 404);
+    if (!Auth::check()) {
+        return response()->json(['error' => 'Bạn cần đăng nhập để thêm vào giỏ hàng.'], 401);
     }
-    $optionsJson = json_encode($request->options);
-    $price = $request->price;
 
-    $cartItem = ProductCart::where('user_id', Auth::id())
+    $product = Product::find($request->product_id);
+    if (!$product) {
+        return response()->json(['error' => 'Sản phẩm không tồn tại.'], 404);
+    }
+
+    $userId = Auth::id();
+    $optionId = $request->input('option_id');
+    $colorId = $request->input('color_id');
+    $quantity = $request->input('quantity', 1);
+
+    // Lấy giá sản phẩm (bao gồm giá base + giá option + giá color)
+    $basePrice = $product->price;
+    $variantPrice = 0;
+
+    // Kiểm tra và lấy giá của option nếu có
+    if ($optionId && $colorId) {
+        $variant = ProductVariant::where('product_id', $product->id)
+            ->where('option_id', $optionId)
+            ->where('color_id', $colorId)
+            ->first();
+
+        if ($variant) {
+            $variantPrice = $variant->variant_price; // Sử dụng giá variant
+        } else {
+            $variantPrice = $basePrice; // Nếu không có variant, dùng giá base
+        }
+    } else {
+        $variantPrice = $basePrice; // Nếu không có tùy chọn, dùng giá base
+    }
+    $totalPrice = ($variantPrice) * $quantity;
+
+    // Kiểm tra sản phẩm đã tồn tại trong giỏ hàng chưa
+    $cartItem = ProductCart::where('user_id', $userId)
         ->where('product_id', $product->id)
-        ->where('options', $optionsJson)
+        ->where('option_id', $optionId)
+        ->where('color_id', $colorId)
         ->first();
 
     if ($cartItem) {
-        $cartItem->increment('quantity', $request->quantity);
+        // Nếu đã có, cập nhật số lượng và giá
+        $cartItem->quantity += $quantity;
+        $cartItem->price = $totalPrice;
         $cartItem->save();
     } else {
+        // Nếu chưa có, thêm mới vào giỏ hàng
         ProductCart::create([
-            'user_id' => Auth::id(),
+            'user_id' => $userId,
             'product_id' => $product->id,
-            'quantity' => $request->quantity,
-            'price' => $price,
-            'options' => $optionsJson,
+            'quantity' => $quantity,
+            'price' => $totalPrice,
+            'option_id' => $optionId,
+            'color_id' => $colorId,
         ]);
     }
-    return response()->json(['success' => 'Thêm vào giỏ hàng thành công'], 200);
+
+    return response()->json(['success' => 'Sản phẩm đã được thêm vào giỏ hàng.'], 200);
 });
+
+
 
 
 // =======Xóa sản phẩm khỏi giỏ==
@@ -795,12 +800,6 @@ Route::get('/api/count/cart', function (Request $request) {
 });
 
 
-// xử lý khi click biến thể
-Route::post('api/product_variant', function (Request $request) {});
-
-
-
-
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -812,14 +811,25 @@ Route::middleware('auth')->group(function () {
 Route::get('/products/show', [ProductController::class, 'show']);
 
 
-Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
-    Route::get('/', [AdminController::class, 'index'])->name('index');
+Route::prefix('admin')->name('admin.')->middleware(['admin'])->group(function () {
+    Route::get('/', [AdminController::class, 'dashboard'])->name('index');
     Route::get('/admin', [AdminController::class, 'index'])->name('admin');
 
-    Route::get('/users', [AdminController::class, 'rec_user'])->name('users');
+    Route::resource('colors', ColorController::class);
+    Route::get('colors/{id}/restore', [ColorController::class, 'restore_colors'])->name('colors.restore');
+    Route::delete('colors/{id}/force-delete', [ColorController::class, 'force_delete_colors'])->name('colors.force_delete');
+    Route::get('/trash_colors', [ColorController::class, 'trash_colors'])->name('trash_colors');
+    Route::resource('options', OptionController::class);
+    Route::get('options/{id}/restore', [OptionController::class, 'restore'])->name('options.restore');
+    Route::delete('options/{id}/force-delete', [OptionController::class, 'delete'])->name('options.force_delete');
+    Route::get('/trash_options', [OptionController::class, 'trash_option'])->name('trash_options');
+
+
     Route::resource('users', AdminController::class);
+    Route::put('users/{id}/update-status', [AdminController::class, 'updateStatus'])->name('users.updateStatus');
 
     Route::get('/categories', [AdminController::class, 'rec_category'])->name('categories');
+    Route::get('/categories/trash-category', [CategoryController::class, 'trash_category'])->name('trash_categories');
     Route::resource('categories', CategoryController::class);
 
     Route::get('/products', [AdminController::class, 'rec_product'])->name('products');
@@ -830,12 +840,12 @@ Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
 
     Route::get('/orders', [AdminController::class, 'rec_order'])->name('orders');
     Route::get('/orders/', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/payment/', [OrderController::class, 'paymentsIndex'])->name('payments.index');
     Route::patch('/orders/{id}/updateStatus', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 
     Route::get('/brands', [BrandController::class, 'rec_brands'])->name('brands');
     Route::resource('brands', BrandController::class);
     Route::get('brands/{id}/restore', [BrandController::class, 'restore_brand'])->name('restore_brand');
-
     Route::get('/trash_brand', [BrandController::class, 'trash_brand'])->name('trash_brands');
 
 

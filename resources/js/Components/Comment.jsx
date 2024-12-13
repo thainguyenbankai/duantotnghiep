@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { usePage, Link } from '@inertiajs/react';
 import { message, Modal, Rate, Input, Button } from 'antd';
+const csrfToken = document.head.querySelector('meta[name="csrf-token"]');
 
+if (csrfToken) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken.content;
+}
 const Comment = ({ product }) => {
     const { props } = usePage();
     const user = props.auth.user;
@@ -9,8 +13,8 @@ const Comment = ({ product }) => {
     const [showModal, setShowModal] = useState(false);
     const [selectedStars, setSelectedStars] = useState(0);
     const [comment, setComment] = useState('');
-    const [ratings, setRatings] = useState([]);
-    const [comments, setComments] = useState([]);
+    const [ratings, setRatings] = useState([]);  // Khởi tạo với mảng rỗng
+    const [comments, setComments] = useState([]); // Khởi tạo với mảng rỗng
 
     const imageUrl = product.image ? `/storage/${product.image}` : '/default-image.jpg';
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -25,18 +29,7 @@ const Comment = ({ product }) => {
         setComment('');
     };
 
-    const fetchComments = async () => {
-        try {
-            const response = await fetch(`/api/comments/${product.id}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch comments');
-            }
-            const data = await response.json();
-            setComments(data);
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    };
+
 
     const handleSubmitComment = async () => {
         if (!user) {
@@ -78,16 +71,28 @@ const Comment = ({ product }) => {
             message.error('Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.');
         }
     };
-
+    const fetchComments = async () => {
+        try {
+            const response = await fetch(`/api/comments/${product.id}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch comments');
+            }
+            const data = await response.json();
+            setComments(data || []); // Đảm bảo data là mảng
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
     const fetchRatings = async () => {
         try {
-            const response = await fetch(`/api/comments/stats/${product.id}`);
+            const response = await fetch(`/api/comments/${product.id}`);
             const data = await response.json();
-            setRatings(data);
+            setRatings(data.ratings || []);  // Đảm bảo data.ratings là mảng
         } catch (error) {
             console.error('Error fetching ratings:', error);
         }
     };
+
 
     useEffect(() => {
         fetchRatings();
@@ -95,19 +100,15 @@ const Comment = ({ product }) => {
     }, [product.id]);
 
     return (
-        <div className="container mx-auto mt-8 px-20">
+        <div className="container mt-12">
             <h2 className="text-xl font-bold mb-4">Đánh giá sản phẩm</h2>
             <div className="flex">
                 <div className="w-1/2 p-4">
-                    <h2 className="text-2xl font-semibold">4.5</h2>
-                    <div className="flex items-center">
-                        <span className="text-yellow-500 flex">{'★★★★★'}</span>
-                    </div>
-                    <span className="text-sm">{ratings.reduce((acc, rating) => acc + rating.count, 0)} Đánh giá & Nhận
-                        xét</span>
+                    <span className="text-sm">{comments.length} Bình luận</span> {/* Hiển thị tổng số bình luận */}
                 </div>
+
                 <div className="w-1/2 p-4 flex flex-col gap-4">
-                    {ratings.map((rating, index) => (
+                    {ratings.length > 0 && ratings.map((rating, index) => (
                         <div key={index} className="flex justify-between items-center w-full">
                             <div className="w-1/3 flex flex-col items-center">
                                 <span className="text-yellow-500 flex">
@@ -123,6 +124,18 @@ const Comment = ({ product }) => {
                             <div className="w-1/3 flex flex-col items-center">
                                 <span className="text-sm">{rating.count} đánh giá</span>
                             </div>
+                        </div>
+                    ))}
+
+                    {comments.length > 0 && comments.map((comment) => (
+                        <div key={comment.id} className="border-b border-gray-300 pb-4 mb-4">
+                            <div className="flex justify-between">
+                                <span className="font-semibold">{comment.username}</span>
+                                <span className="text-yellow-500">
+                                    {'★'.repeat(comment.rating).padEnd(5, '☆')}
+                                </span>
+                            </div>
+                            <p className="text-gray-700">{comment.review_text}</p>
                         </div>
                     ))}
                 </div>
@@ -148,7 +161,9 @@ const Comment = ({ product }) => {
                     <div key={comment.id} className="border-b border-gray-300 pb-4 mb-4">
                         <div className="flex justify-between">
                             <span className="font-semibold">{comment.username}</span>
-                            <span className="text-yellow-500">{'★'.repeat(comment.rating)}</span>
+                            <span className="text-yellow-500">
+                                {'★'.repeat(comment.rating).padEnd(5, '☆')}  {/* Hiển thị số sao */}
+                            </span>
                         </div>
                         <p className="text-gray-700">{comment.review_text}</p>
                     </div>

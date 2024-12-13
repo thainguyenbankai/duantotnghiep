@@ -26,19 +26,26 @@ class RegisteredUserController extends Controller
 {
     $request->validate([
         'name' => 'required|string|max:255',
-        'email' => 'required|string|email|max:255|unique:users,email',
+        'email' => [
+            'required',
+            'email',
+            'max:255',
+            'unique:users,email',
+            'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
+        ],
         'password' => ['required', 'confirmed', Rules\Password::defaults()],
     ], [
         'name.required' => 'Tên là bắt buộc.',
         'name.string' => 'Tên phải là một chuỗi.',
         'name.max' => 'Tên không được vượt quá 255 ký tự.',
-        
+
         'email.required' => 'Email là bắt buộc.',
         'email.string' => 'Email phải là một chuỗi.',
         'email.email' => 'Email phải là một địa chỉ email hợp lệ.',
         'email.max' => 'Email không được vượt quá 255 ký tự.',
         'email.unique' => 'Email này đã được đăng ký, vui lòng chọn email khác.',
-        
+        'email.regex' => 'Email phải có định dạng hợp lệ (ví dụ: user@example.com).',
+
         'password.required' => 'Mật khẩu là bắt buộc.',
         'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
     ]);
@@ -62,10 +69,8 @@ class RegisteredUserController extends Controller
     ]);
 
     Mail::to($request->email)->send(new Verification($verificationUrl));
-
-    return Inertia::render('Auth/Register', [
-        'alert' => 'Một email xác minh đã được gửi đến địa chỉ email của bạn.'
-    ]);
+    return redirect()->route('login');
+    
 }
 
     

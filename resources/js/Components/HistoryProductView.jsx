@@ -5,20 +5,30 @@ import { Dropdown, Menu, Button } from 'antd';  // Import từ antd
 import { SearchOutlined, HeartOutlined, UserOutlined, LoginOutlined, UserAddOutlined, BarsOutlined } from '@ant-design/icons'; // Import icon từ antd
 import GetListCategory from '@/Components/GetListCategory';
 import CartCount from '@/Components/CountCart';
+const csrfToken = document.head.querySelector('meta[name="csrf-token"]');
 
+if (csrfToken) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken.content;
+}
 const HeaderLayout = () => {
     const loginUrl = '/login';
     const registerUrl = '/register';
     const cartUrl = '/cart';
     const { props } = usePage();
     const user = props.auth.user;
-    
+    const isAdmin = props.isAdmin;
+
     const navigateTo = (url) => {
         window.location.href = `${window.location.origin}${url}`;
     };
 
     const userMenu = (
         <Menu>
+            {isAdmin && (  // Kiểm tra nếu là admin
+                <Menu.Item key="admin">
+                    <Link href={route('admin.dashboard')}>Quản trị viên</Link>
+                </Menu.Item>
+            )}
             <Menu.Item key="profile">
                 <Link href={route('profile.edit')}>Hồ sơ cá nhân</Link>
             </Menu.Item>
@@ -98,7 +108,6 @@ const HeaderLayout = () => {
                         <Link className='hover:text-blue-400' href={route('page.products')}>Sản phẩm</Link>
                         <Link className='hover:text-blue-400' href={route('page.about')}>Giới thiệu</Link>
                         <Link className='hover:text-blue-400' href={route('page.support')}>Hỗ Trợ</Link>
-                        <Link className='hover:text-blue-400' href={route('page.contact')}>Liên hệ</Link>
                     </ul>
 
                     {/* User Actions */}
