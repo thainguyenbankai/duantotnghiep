@@ -3,7 +3,6 @@ import { Link } from '@inertiajs/react';
 import { Table, Layout, Typography, Space, Button, message, Row, Col } from 'antd';
 import { EyeOutlined, HeartOutlined } from '@ant-design/icons';
 import axios from 'axios';
-
 const { Header, Content } = Layout;
 const { Title } = Typography;
 

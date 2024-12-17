@@ -6,6 +6,7 @@
         display: flex
     }
 </style>
+
 @section('content')
     <div class="container-fluid my-5">
         <h2 class="text-center mb-4">Thêm Sản Phẩm</h2>
@@ -26,11 +27,11 @@
                 <!-- Số lượng sản phẩm -->
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label for="quantity" class="control-label">Số lượng sản phẩm</label>
-                        <input type="number" name="quantity" id="quantity" value="{{ old('quantity') }}" required
-                            class="form-control">
+                        <label for="quantity" class="control-label">Tổng số lượng sản phẩm</label>
+                        <input type="number" name="quantity" id="quantity" value="0" class="form-control" readonly>
                     </div>
                 </div>
+
                 <!-- Giá sản phẩm -->
                 <div class="col-md-6">
                     <div class="form-group">
@@ -206,11 +207,69 @@
             }
         });
     </script>
-      <script>
+    <script>
         document.getElementById('quantity').addEventListener('input', function() {
             if (this.value < 0) {
                 this.value = 0; // Ngăn không cho giá trị xuống dưới 0
             }
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const priceInput = document.getElementById('price');
+            const discountPriceInput = document.getElementById('dis_price');
+            const totalQuantityInput = document.getElementById('quantity');
+            const formOptions = document.getElementById('form-options');
+            const price = parseFloat(priceInput.value) || 0;
+            const discountPrice = parseFloat(discountPriceInput.value) || price;
+            const observer = new MutationObserver(() => updateTotalQuantity());
+            observer.observe(formOptions, {
+                childList: true
+            });
+
+
+            function updateTotalQuantity() {
+                const totalQuantity = Array.from(formOptions.querySelectorAll('input[name$="[variant_quantity]"]'))
+                    .reduce((sum, input) => sum + (parseInt(input.value) || 0), 0);
+                totalQuantityInput.value = totalQuantity;
+            }
+
+
+            // Kiểm tra giới hạn giá cho các tùy chọn
+            formOptions.addEventListener('input', function(event) {
+                if (event.target.name?.includes('[variant_price]')) {
+                    const price = parseFloat(priceInput.value) || 0;
+                    const discountPrice = parseFloat(discountPriceInput.value) || 0;
+                    const variantPrice = parseFloat(event.target.value) || 0;
+
+                    if (variantPrice > price || variantPrice > discountPrice) {
+                        alert(
+                            `Giá của tùy chọn không được vượt quá giá sản phẩm (${price}) hoặc giá khuyến mãi (${discountPrice}).`
+                            );
+                        event.target.value = ''; // Reset giá trị nếu vượt quá
+                    }
+                }
+            });
+
+            // Tự động cập nhật tổng số lượng khi thay đổi số lượng tùy chọn
+            formOptions.addEventListener('input', function(event) {
+                if (event.target.name?.includes('[variant_quantity]')) {
+                    updateTotalQuantity();
+                }
+            });
+
+            // Đảm bảo tổng số lượng được cập nhật khi thêm hoặc xóa tùy chọn
+            document.getElementById('add-variant-btn').addEventListener('click', updateTotalQuantity);
+            formOptions.addEventListener('click', function(event) {
+                if (event.target.classList.contains('remove-variant-btn')) {
+                    setTimeout(updateTotalQuantity, 100); // Đợi DOM cập nhật sau khi xóa
+                }
+            });
+
+            // Chặn nhập thủ công số lượng tổng
+            totalQuantityInput.addEventListener('keydown', function(event) {
+                event.preventDefault();
+            });
         });
     </script>
 @endsection

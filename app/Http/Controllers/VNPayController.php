@@ -6,6 +6,7 @@ use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class VNPayController extends Controller
 {
@@ -150,5 +151,45 @@ class VNPayController extends Controller
         return $calculatedHash;
     }
 
- 
+    public function vnpay_return(Request $request){
+        $vnp_Amount = $request->input('vnp_Amount');
+        $vnp_BankCode = $request->input('vnp_BankCode');
+        $vnp_BankTranNo = $request->input('vnp_BankTranNo');
+        $vnp_OrderInfo = $request->input('vnp_OrderInfo');
+        $vnp_ResponseCode = $request->input('vnp_ResponseCode');
+        $vnp_SecureHash = $request->input('vnp_SecureHash');
+        $vnp_TmnCode = $request->input('vnp_TmnCode');
+        $vnp_TransactionNo = $request->input('vnp_TransactionNo');
+        $vnp_TransactionStatus = $request->input('vnp_TransactionStatus');
+        $vnp_TxnRef = $request->input('vnp_TxnRef');
+        $vnp_PayDate = $request->input('vnp_PayDate');
+        $secretKey = '6MX4BPMEHICWKWXZ7Q3T3Q3EJIIYTDVR';
+        $hashData = http_build_query($request->except('vnp_SecureHash'));
+
+        $secureHash = strtoupper(md5($hashData . '&' . $secretKey));
+
+        if ($secureHash != $vnp_SecureHash) {
+            if ($vnp_ResponseCode === '00' && $vnp_TransactionStatus === '00') {
+                $payment = Payment::where('order_id', (int) $vnp_TxnRef)->first();
+
+                if ($payment) {
+                    $payment->transaction_status = "success";
+                    $payment->vnp_response_code =  $vnp_ResponseCode;
+                    $payment->save();
+                }
+                return Inertia::render('OrderHistory', ['message' => "Thanh toán thành công"]);
+            } else {
+                return response()->json(["message" => "Thanh toán thất bại"], 400);
+            }
+        } else {
+            return response()->json(["message" => "Trạng thái sai"], 400);
+        }
+    }
+    public function vnpay_store(Request $request) {
+        $client = new \GuzzleHttp\Client();
+    $response = $client->post('https://sandbox.vnpayment.vn/paymentv2/vpcpay.html', [
+        'form_params' => $request->all(),
+    ]);
+    return response()->json(json_decode($response->getBody(), true));
+    }
 }

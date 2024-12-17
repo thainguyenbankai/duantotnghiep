@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Select, Checkbox, Slider, Button, Card, Row, Col, Typography } from 'antd';
-import { ShopOutlined, FilterOutlined, DollarOutlined, StarOutlined, ReloadOutlined } from '@ant-design/icons';
+import { ShopOutlined, FilterOutlined, DollarOutlined, ReloadOutlined } from '@ant-design/icons';
 import ProductCard from '@/Components/ProductCard';
 import PageTitle from './Layouts/TitlePage';
 
@@ -8,7 +8,7 @@ const { Content } = Layout;
 const { Title } = Typography;
 
 const ProductPage = ({ products = [], brands = [], categories = [] }) => {
-    const minPrice = products.length > 0 ? Math.min(...products.map(product => product.price)) : 0;
+    const minPrice = products.length > 0 ? Math.min(...products.map(product => product.dis_price)) : 0;
     const maxPrice = products.length > 0 ? Math.max(...products.map(product => product.dis_price)) : 20;
 
     const [filteredProducts, setFilteredProducts] = useState(products);
@@ -17,6 +17,7 @@ const ProductPage = ({ products = [], brands = [], categories = [] }) => {
     const [ratingFilters, setRatingFilters] = useState([]);
     const [brandFilters, setBrandFilters] = useState([]);
     const [sortOrder, setSortOrder] = useState('');
+
 
     useEffect(() => {
         filterAndSortProducts();
@@ -66,6 +67,7 @@ const ProductPage = ({ products = [], brands = [], categories = [] }) => {
         updatedProducts = filterByCategory(updatedProducts);
         updatedProducts = filterByRating(updatedProducts);
         updatedProducts = filterByBrand(updatedProducts);
+
         updatedProducts = sortProducts(updatedProducts);
 
         setFilteredProducts(updatedProducts);
@@ -167,26 +169,19 @@ const ProductPage = ({ products = [], brands = [], categories = [] }) => {
                     </Col>
 
                     {/* Danh sách sản phẩm */}
-                    <Col xs={24} sm={16} md={18}>
+                    <Col xs={24} sm={16} md={18} className="product-col">
                         <Card title="Sản phẩm" bordered={false}>
                             <div
                                 style={{
-                                    display: 'flex',
-                                    flexWrap: 'wrap',
-                                    gap: '10px',
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+                                    gap: '5px',
                                     justifyContent: 'center',
                                 }}
                             >
                                 {filteredProducts.length > 0 ? (
                                     filteredProducts.map((product) => (
-                                        <div
-                                            key={product.id}
-                                            style={{
-                                                flex: '1 0 50%', // Hiển thị 2 sản phẩm trên mỗi hàng trên mobile
-                                                maxWidth: 'calc(50% - 10px)', // Đảm bảo 2 sản phẩm mỗi hàng
-                                                marginBottom: '15px',
-                                            }}
-                                        >
+                                        <div key={product.id} className="product-card">
                                             <ProductCard product={product} />
                                         </div>
                                     ))

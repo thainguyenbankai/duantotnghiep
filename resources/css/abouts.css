@@ -25,3 +25,19 @@
 .feature p {
     font-size: 1.2rem;
 }
+.product-image {
+    width: 200px;  /* Hoặc điều chỉnh theo nhu cầu */
+    height: 300px; /* Hoặc điều chỉnh theo nhu cầu */
+    object-fit: contain; /* Đảm bảo hình ảnh vừa vặn mà không bị cắt */
+    object-position: center; /* Đảm bảo hình ảnh được căn giữa */
+  }
+  
+  .product-image-placeholder {
+    width: 200px;
+    height: 300px;
+    background-color: #f0f0f0; /* Màu nền cho hình ảnh trống */
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+  }
+  

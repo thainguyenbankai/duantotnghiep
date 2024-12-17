@@ -4,6 +4,7 @@ import ProductListNew from './Layouts/ProductList_New';
 import Slideshow from '../Components/Carousel';
 import VoucherList from './layouts/VoucherList';
 import { message } from 'antd';
+import ChatBox from './Chatbox';
 
 const Home = ({ products, products_news, errors }) => {
     // Hiển thị thông báo lỗi nếu có
@@ -12,7 +13,6 @@ const Home = ({ products, products_news, errors }) => {
             message.error(error);
         });
     }
-
     return (
         <>
             <Slideshow />

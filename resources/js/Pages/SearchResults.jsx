@@ -2,6 +2,8 @@ import React from 'react';
 import ProductCard from '@/Components/ProductCard';
 
 import '../../css/product.css';
+axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+
 const SearchResults = ({ results, query, count }) => {
     return (
         <>

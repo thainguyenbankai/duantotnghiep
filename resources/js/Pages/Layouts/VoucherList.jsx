@@ -2,10 +2,10 @@ import React from "react";
 import { Carousel, Button, Tooltip } from "antd";
 
 const vouchers = [
-    { code: "SHOPEE20", discount: "Giảm 20.000 đ", description: "Mã giảm 20.000 cho khách hàng " },
-    { code: "SHOPEE21", discount: "Giảm 30.000 đ", description: "Mã giảm 30.000 " },
-    { code: "SHOPEE22", discount: "Giảm 40.000 đ", description: "Mã giảm 40.000" },
-    { code: "SHOPEE23", discount: "Giảm 50.000 đ", description: "Mã giảm 50.000 cho sản phẩm" },
+    { code: "MAGIC20", discount: "Giảm 20.000 ", description: "Mã giảm 20.000" },
+    { code: "MAGIC21", discount: "Giảm 30.000 ", description: "Mã giảm 30.000" },
+    { code: "MAGIC23", discount: "Giảm 40.000 ", description: "Mã giảm 40.000" },
+    { code: "MAGIC24", discount: "Giảm 50.000 ", description: "Mã giảm 50.000" },
 ];
 
 const VoucherList = () => {

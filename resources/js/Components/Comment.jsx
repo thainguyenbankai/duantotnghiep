@@ -16,7 +16,7 @@ const Comment = ({ product }) => {
     const [ratings, setRatings] = useState([]);  // Khởi tạo với mảng rỗng
     const [comments, setComments] = useState([]); // Khởi tạo với mảng rỗng
 
-    const imageUrl = product.image ? `/storage/${product.image}` : '/default-image.jpg';
+    const imageUrl = product.image ? `/${product.image}` : '/default-image.jpg';
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     const handleOpenModal = () => {

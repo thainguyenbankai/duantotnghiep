@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
+axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
 
 const PayVNPay = ({ orderId, totalAmount }) => {
     const VNPayConfig = {

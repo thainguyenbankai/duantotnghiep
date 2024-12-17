@@ -3,6 +3,9 @@ import '../../css/slideshow.css';
 
 const Carousel = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [startX, setStartX] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+
     const images = [
         'storage/images/slide.jpg',
         'storage/images/slide2.jpg',
@@ -17,16 +20,50 @@ const Carousel = () => {
     const prevSlide = () => {
         setCurrentSlide((prev) => (prev - 1 + images.length) % images.length);
     };
+
     useEffect(() => {
-        const interval = setInterval(nextSlide, 10000); 
-        return () => clearInterval(interval); 
+        const interval = setInterval(nextSlide, 10000);
+        return () => clearInterval(interval);
     }, []);
 
-    return (
-        <div id="default-carousel" className="relative w-full  ">
+    // Xử lý vuốt tay
+    const handleTouchStart = (e) => {
+        setStartX(e.touches[0].clientX);
+        setIsDragging(true);
+    };
 
+    const handleTouchMove = (e) => {
+        if (!isDragging) return;
+        const currentX = e.touches[0].clientX;
+        const diff = currentX - startX;
+
+        if (diff > 50) {
+            prevSlide();
+            setIsDragging(false);
+        } else if (diff < -50) {
+            nextSlide();
+            setIsDragging(false);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        setIsDragging(false);
+    };
+
+    return (
+        <div
+            id="default-carousel"
+            className="relative w-full"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+        >
+            {/* Hình ảnh */}
             <div className="relative h-56 overflow-hidden md:h-96">
-                <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+                <div
+                    className="flex transition-transform duration-700 ease-in-out"
+                    style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                >
                     {images.map((src, index) => (
                         <div key={index} className="flex-shrink-0 w-full h-full">
                             <img
@@ -38,22 +75,11 @@ const Carousel = () => {
                     ))}
                 </div>
             </div>
-            <div className="absolute z-30 flex -translate-x-1/2 bottom-5 left-1/2 space-x-3 rtl:space-x-reverse">
-                {images.map((_, index) => (
-                    <button
-                        key={index}
-                        type="button"
-                        className={`w-3 h-3 rounded-full transition-colors duration-300 ${currentSlide === index ? 'bg-blue-500' : 'bg-gray-300'
-                            }`}
-                        aria-current={currentSlide === index}
-                        aria-label={`Slide ${index + 1}`}
-                        onClick={() => setCurrentSlide(index)}
-                    />
-                ))}
-            </div>
+
+            {/* Nút điều hướng */}
             <button
                 type="button"
-                className="absolute top-0 left-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none"
+                className="absolute top-0 left-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none hidden md:flex"
                 onClick={prevSlide}
             >
                 <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-500 group-hover:bg-gray-300 group-focus:ring-4 group-focus:ring-white dark:group-focus:ring-gray-800/70 group-focus:outline-none">
@@ -77,7 +103,7 @@ const Carousel = () => {
             </button>
             <button
                 type="button"
-                className="absolute top-0 right-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none"
+                className="absolute top-0 right-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none hidden md:flex"
                 onClick={nextSlide}
             >
                 <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gray-500 group-hover:bg-gray-600 group-focus:ring-4 group-focus:ring-white dark:group-focus:ring-gray-800/70 group-focus:outline-none">

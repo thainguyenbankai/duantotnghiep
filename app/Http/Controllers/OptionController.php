@@ -35,7 +35,7 @@ class OptionController extends Controller
     {
         $options = Options::findOrFail($id);
         $ramOptions = ['4', '6', '8', '12', '16'];
-        $romOptions = ['32', '64', '128', '256', '512'];
+        $romOptions = ['32', '64', '128', '256', '512', '1T', '2T'];
 
         return view('admin.Options.edit', compact('options', 'ramOptions', 'romOptions'));
     }

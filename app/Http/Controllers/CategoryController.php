@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
@@ -129,5 +131,23 @@ class CategoryController extends Controller
         $category = Category::withTrashed()->where('id', $id)->first();
         $category->forceDelete();
         return redirect()->back()->with('success', 'Xóa danh mục vĩnh viễn thành công!');
+    }
+
+    public function show_categories(string $id = null) {
+        if ($id) {
+            $brand = Category::with('products')->where('id', $id)->firstOrFail();
+            $data = [
+                'brand' => $brand,
+                'products' => $brand->products,
+            ];
+        } else {
+            $data = [
+                'brands' => Category::with('products')->get(),
+                'products' => Product::all(),
+            ];
+        }
+        return Inertia::render('Category', [
+            'data' => $data,
+        ]);
     }
 }

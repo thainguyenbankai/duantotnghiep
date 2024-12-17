@@ -62,8 +62,7 @@
                                         $images = json_decode($product->images); // Giải mã JSON chứa danh sách hình ảnh
                                     @endphp
                                     @if (!empty($images) && isset($images[0]))
-                                        <img src="{{ asset('storage/' . $images[0]) }}" alt="{{ $product->name }}"
-                                            width="80px">
+                                        <img src="{{ asset($images[0]) }}" alt="{{ $product->name }}" width="80px">
                                     @else
                                         <span>Chưa có hình ảnh</span>
                                     @endif

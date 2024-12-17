@@ -9,9 +9,13 @@ const CartList = ({ cartItems }) => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [allProducts, setAllProducts] = useState(cartItems);
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
     const calculateTotalPrice = useMemo(() => {
         return allProducts.reduce((acc, item, index) => {
-            return selectedItems[index] ? acc + item.price * item.quantity : acc;
+            if (selectedItems[index] && item.quantity > 0) {
+                return acc + item.price * item.quantity;
+            }
+            return acc;
         }, 0);
     }, [selectedItems, allProducts]);
 
@@ -67,11 +71,10 @@ const CartList = ({ cartItems }) => {
     const updateQuantity = useCallback(
         async (itemId, newQuantity) => {
             if (newQuantity < 1) return;
-            const originalProducts = [...allProducts];
+
             const updatedProducts = allProducts.map(item =>
                 item.id === itemId ? { ...item, quantity: newQuantity } : item
             );
-            setAllProducts(updatedProducts);
 
             try {
                 const response = await fetch(`/api/cart/quantity`, {
@@ -82,19 +85,19 @@ const CartList = ({ cartItems }) => {
                     },
                     body: JSON.stringify({ id: itemId, quantity: newQuantity }),
                 });
-                if (!response.ok) {
-                    setAllProducts(originalProducts);
-                    showMessage('Cập nhật số lượng không thành công.', 'error');
+
+                if (response.ok) {
+                    setAllProducts(updatedProducts); // Cập nhật nếu server phản hồi thành công
+                } else {
+                    throw new Error('Cập nhật thất bại');
                 }
             } catch (error) {
                 console.error('Error updating quantity:', error);
-                setAllProducts(originalProducts);
                 showMessage('Đã xảy ra lỗi khi cập nhật số lượng.', 'error');
             }
         },
         [csrfToken, allProducts]
     );
-
 
     const handleCheckout = () => {
         const selectedItemsToCheckout = allProducts.filter((_, index) => selectedItems[index]).map(item => ({
@@ -114,109 +117,112 @@ const CartList = ({ cartItems }) => {
     };
 
     return (
-        <>
-            <div className="container mx-auto px-6 py-10 bg-white rounded-lg shadow-md">
-                <Title level={2} className="text-center mb-8"><i className="fas fa-shopping-cart"></i> Giỏ hàng của bạn</Title>
-                <div className="flex justify-between mb-6">
-                    <Button
-                        onClick={handleRemoveSelected}
-                        type="danger"
-                        style={{ backgroundColor: '#f5222d', borderColor: '#f5222d', color: '#fff' }}
-                        className="hover:bg-red-700 transition-colors duration-300"
-                        disabled={selectedItems.every(item => !item)}
-                    >
-                        <i className="fas fa-trash-alt"></i> Xóa đã chọn
-                    </Button>
-                    <Button
-                        onClick={handleSelectAll}
-                        type="primary"
-                        disabled={allProducts.length === 0}
-                        style={{ backgroundColor: '#4CAF50', borderColor: '#4CAF50' }}
-                        className="hover:bg-green-700 transition-colors duration-300"
-                    >
-                        {selectAll ? <i className="fas fa-times"></i> : <i className="fas fa-check"></i>} {selectAll ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
-                    </Button>
-
-                </div>
-
-                {allProducts.length > 0 ? (
-                    <List
-                        itemLayout="vertical"
-                        dataSource={allProducts}
-                        renderItem={(item, index) => (
-                            <List.Item
-                                key={item.id}
-                                className="bg-gray-100 p-4 rounded-lg mb-4 shadow-sm hover:shadow-md transition-shadow duration-300"
-                            >
-                                <Checkbox
-                                    checked={selectedItems[index]}
-                                    onChange={() => handleItemSelect(index)}
-                                    className="mr-3"
-                                />
-                                <List.Item.Meta
-                                    avatar={
-                                        Array.isArray(item.product?.images) && item.product.images.length > 0 ? (
-
-                                            <div className="product-carousel">
-
-                                                {item.product.images.map((image, index) => (
-                                                    <div key={index} className="product-carousel-item">
-                                                        <img
-                                                            src={`/storage/${image[0]}`}
-                                                            alt={item.product.name}
-                                                            className="rounded-lg w-full h-[400px] object-cover"
-                                                        />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center justify-center h-[130px] bg-gray-200">
-                                                <span>Không có ảnh</span>
-                                            </div>
-                                        )
-                                    }
-
-                                    title={<Text strong>{item.product?.name}</Text>}
-                                    description={
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center mb-2">
-                                                <Text strong>Số lượng:</Text>
-                                                <InputNumber
-                                                    min={1}
-                                                    value={item.quantity}
-                                                    onChange={value => updateQuantity(item.id, value)}
-                                                    className="ml-2"
-                                                />
-                                                <Text className="text-red-500 ml-4">
-                                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price * item.quantity)}
-                                                </Text>
-                                            </div>
-                                            <div className="flex items-center mb-2">
-                                                <Text strong>Tùy chọn:</Text>
-                                                <Text className="ml-2">{item.option_name}</Text>
-                                            </div>
-                                            <div className="flex items-center mb-2">
-                                                <Text strong>Màu sắc:</Text>
-                                                <Text className="ml-2">{item.color_name}</Text>
-                                            </div>
-                                        </div>
-                                    }
-                                />
-                            </List.Item>
-                        )}
-                    />
-
-                ) : (
-                    <Text type="secondary" className="text-center">Giỏ hàng của bạn hiện tại trống</Text>
-                )}
-                <div className="mt-10 flex justify-between items-center">
-                    <Title level={3}><i className="fas fa-money-bill-wave"></i> Tổng tiền: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice)}</Title>
-                    <Button onClick={handleCheckout} type="primary" size="large" style={{ backgroundColor: '#4CAF50', borderColor: '#4CAF50' }} className="hover:bg-green-700 transition-colors duration-300">
-                        <i className="fas fa-credit-card"></i> Thanh toán
-                    </Button>
-                </div>
+        <div className="container mx-auto px-6 py-10 bg-white rounded-lg shadow-xl mt-10 max-w-7xl">
+            <Title level={2} className="text-center mb-8 text-gray-800 font-semibold">
+                <i className="fas fa-shopping-cart"></i> Giỏ hàng của bạn
+            </Title>
+            <div className="flex justify-between items-center mb-6">
+                <Button
+                    onClick={handleRemoveSelected}
+                    type="primary"
+                    danger
+                    style={{ backgroundColor: '#ff4d4f', borderColor: '#ff4d4f' }}
+                    disabled={selectedItems.every(item => !item)}
+                    icon={<i className="fas fa-trash-alt"></i>}
+                    className="transition-colors duration-200 hover:bg-red-600"
+                >
+                    Xóa đã chọn
+                </Button>
+                <Button
+                    onClick={handleSelectAll}
+                    type="primary"
+                    style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
+                    icon={selectAll ? <i className="fas fa-times"></i> : <i className="fas fa-check"></i>}
+                    className="transition-colors duration-200 hover:bg-blue-700"
+                >
+                    {selectAll ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                </Button>
             </div>
-        </>
+
+            {allProducts.length > 0 ? (
+                <List
+                    itemLayout="vertical"
+                    dataSource={allProducts}
+                    renderItem={(item, index) => (
+                        <List.Item
+                            key={item.id}
+                            className="bg-gray-50 p-4 rounded-xl mb-4 shadow-md hover:shadow-lg transition-all duration-300"
+                        >
+                            <Checkbox
+                                checked={selectedItems[index]}
+                                onChange={() => handleItemSelect(index)}
+                                className="mr-4"
+                            />
+                            <List.Item.Meta
+                                avatar={
+                                    Array.isArray(item.product?.images) && item.product.images.length > 0 ? (
+                                        <img
+                                            src={`/${item.product.images[0]}`}
+                                            alt={item.product.name}
+                                            className="rounded-lg w-32 h-32 object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center justify-center h-32 bg-gray-300 rounded-md">
+                                            <span className="text-gray-600">Không có ảnh</span>
+                                        </div>
+                                    )
+                                }
+                                title={<Text strong>{item.product?.name}</Text>}
+                                description={
+                                    <div className="flex flex-col mt-2">
+                                        <div className="flex items-center mb-2">
+                                            <Text strong>Số lượng:</Text>
+                                            <InputNumber
+                                                min={1}
+                                                value={item.quantity}
+                                                onChange={(value) => updateQuantity(item.id, value)}
+                                                className="ml-2"
+                                            />
+                                            <Text className="text-red-500 ml-4">
+                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                                                    item.price * item.quantity
+                                                )}
+                                            </Text>
+                                        </div>
+                                        <div className="flex items-center mb-2">
+                                            <Text strong>Tùy chọn:</Text>
+                                            <Text className="ml-2">{item.option_name}</Text>
+                                        </div>
+                                        <div className="flex items-center mb-2">
+                                            <Text strong>Màu sắc:</Text>
+                                            <Text className="ml-2">{item.color_name}</Text>
+                                        </div>
+                                    </div>
+                                }
+                            />
+                        </List.Item>
+                    )}
+                />
+            ) : (
+                <Text type="secondary" className="text-center text-gray-500">Giỏ hàng của bạn hiện tại trống</Text>
+            )}
+
+            <div className="mt-10 flex justify-between items-center">
+                <Title level={3} className="text-gray-800">
+                    <i className="fas fa-money-bill-wave"></i> Tổng tiền: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPrice)}
+                </Title>
+                <Button
+                    onClick={handleCheckout}
+                    type="primary"
+                    size="large"
+                    style={{ backgroundColor: '#4CAF50', borderColor: '#4CAF50' }}
+                    icon={<i className="fas fa-credit-card"></i>}
+                    className="transition-colors duration-200 hover:bg-green-700"
+                >
+                    Thanh toán
+                </Button>
+            </div>
+        </div>
     );
 };
 

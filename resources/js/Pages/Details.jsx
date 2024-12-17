@@ -4,11 +4,7 @@ import '../../css/Details.css';
 import Comment from '@/Components/Comment';
 
 const { Title, Text } = Typography;
-const csrfToken = document.head.querySelector('meta[name="csrf-token"]');
 
-if (csrfToken) {
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken.content;
-}
 
 const ProductDetail = ({ productData }) => {
     const [product, setProduct] = useState(productData || {});
@@ -35,15 +31,16 @@ const ProductDetail = ({ productData }) => {
 
         const variantPrice = selectedVariant ? selectedVariant.variant_price : product.base_price;
 
+        // Nếu có giá khuyến mãi, kiểm tra xem giá của tùy chọn có nhỏ hơn giá khuyến mãi không
         const variantDiscountPrice = selectedVariant?.dis_price || variantPrice;
-
         const finalDiscountPrice = product.dis_price && product.dis_price < variantDiscountPrice
             ? product.dis_price
             : variantDiscountPrice;
-        setTotalPrice(variantPrice);
 
+        setTotalPrice(variantPrice);
         setDiscountedPrice(finalDiscountPrice);
     }, [selectedOptionId, selectedColorId, product]);
+
 
 
 
@@ -132,7 +129,7 @@ const ProductDetail = ({ productData }) => {
                             {product.images?.map((image, index) => (
                                 <div key={index} className="relative">
                                     <img
-                                        src={`/storage/${image}`}
+                                        src={`/${image}`}
                                         alt={product.name}
                                         className="rounded-lg w-full h-96 object-cover transform hover:scale-105 transition-transform duration-500"
                                     />
@@ -164,10 +161,6 @@ const ProductDetail = ({ productData }) => {
                                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(discountedPrice || totalPrice)}
                             </Text>
 
-                            {/* Hiển thị giá khuyến mãi nếu có */}
-                            {product.dis_price && product.dis_price < totalPrice && (
-                                <Text className="text-sm text-green-500">Giảm giá: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.dis_price)}</Text>
-                            )}
                         </div>
 
 

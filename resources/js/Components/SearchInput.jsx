@@ -66,7 +66,7 @@ const SearchInput = () => {
                             className="flex items-center px-4 py-3 hover:bg-green-50 cursor-pointer transition-all duration-200 ease-in-out"
                             onClick={() => handleProduct(result.id)}
                         >
-                            <img src={`storage/${result.image}`} alt={result.name} className="w-10 h-10 mr-3" />
+                            <img src={`/${result.image}`} alt={result.name} className="w-10 h-10 mr-3" />
                             <div className="flex-1">
                                 <p className="text-sm font-medium text-gray-900">{result.name}</p>
                                 <p className="text-xs text-gray-500">{result.description.length > 50 ? `${result.description.substring(0, 50)}...` : result.description}</p>

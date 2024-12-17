@@ -1,7 +1,7 @@
 import PrimaryButton from '@/Components/PrimaryButton';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-
+axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').content;
 export default function VerifyEmail({ status }) {
     const { post, processing } = useForm({});
 

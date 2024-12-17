@@ -12,6 +12,11 @@ class DisableCsrf extends BaseVerifier
         return $next($request);
     }
     protected $except = [
-        '/api/cart/remove', // Thêm đường dẫn của bạn vào đây
+        '/api/cart/remove', 
+        'newpassword',
+        'login',
+        'register',
+        'profile',
+        'checkout'
     ];
 }

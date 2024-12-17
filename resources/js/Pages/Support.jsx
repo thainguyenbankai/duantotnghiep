@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
 
 const WarrantySupportForm = () => {
   const [formData, setFormData] = useState({

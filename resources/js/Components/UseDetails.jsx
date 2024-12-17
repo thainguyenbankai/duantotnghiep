@@ -7,7 +7,7 @@ const useProductDetail = (product) => {
     const [message, setMessage] = useState({ text: '', type: '' });
     const [options, setOptions] = useState(product.options || []);
     const [colors, setColors] = useState(product.colors || []); // Assuming 'colors' is an array in the product object
-    const [image, setImageUrl] = useState(product.image ? `/storage/${product.image}` : '/default-image.jpg');
+    const [image, setImageUrl] = useState(product.image ? `/${product.image}` : '/default-image.jpg');
     const [selectedVariantId, setSelectedVariantId] = useState(options.length > 0 ? options[0].id : null);
     const [selectedColor, setSelectedColor] = useState(null);
     const [price, setPrice] = useState(product.base_price);
@@ -18,10 +18,10 @@ const useProductDetail = (product) => {
         if (product.options && product.options.length > 0) {
             setOptions(product.options);
             setSelectedVariantId(product.options[0].id);
-            const optionImage = product.options[0].image ? `/storage/${product.options[0].image}` : '/default-image.jpg';
+            const optionImage = product.options[0].image ? `/${product.options[0].image}` : '/default-image.jpg';
             setImageUrl(optionImage);
         } else {
-            setImageUrl(product.image ? `/storage/${product.image}` : '/default-image.jpg');
+            setImageUrl(product.image ? `/${product.image}` : '/default-image.jpg');
         }
         setPrice(product.base_price); // Ensure the price is updated
     }, [product]);
@@ -31,7 +31,7 @@ const useProductDetail = (product) => {
         if (selectedOption) {
             setSelectedVariantId(variantId);
             setPrice(selectedOption.price);
-            const optionImage = selectedOption.image ? `/storage/${selectedOption.image}` : '/default-image.jpg';
+            const optionImage = selectedOption.image ? `/${selectedOption.image}` : '/default-image.jpg';
             setImageUrl(optionImage);
             setSelectedColor(color || null); // Set color if passed
         }

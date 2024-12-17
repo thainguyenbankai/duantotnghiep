@@ -16,7 +16,7 @@ const FooterLayout = () => {
     };
 
     return (
-        <footer className="bg-gray-800 text-white py-10">
+        <footer className="bg-gray-800 text-white py-10 mt-20">
             <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
                 {/* Thông Tin Liên Hệ */}
                 <div>
@@ -27,10 +27,10 @@ const FooterLayout = () => {
                         THÔNG TIN LIÊN HỆ
                     </h3>
                     <div className={`${isOpen.contact ? 'block' : 'hidden'} md:block`}>
-                        <p>Số ĐKKD 0135792468 cấp ngày 30/05/2023 tại Sở Kế hoạch Đầu tư TP. Hà Nội</p>
-                        <p>Địa chỉ: 266 Đội Cấn, Ba Đình, Hà Nội</p>
-                        <p>Email: support@sapo.vn</p>
-                        <p>Hotline: 1900 6750</p>
+                        <p>Địa chỉ: 123 Magic Street, Hà Nội</p>
+                        <p>Email: contact@magicshop.com</p>
+                        <p>Hotline: 1900 1234</p>
+                        <p>Website: www.magicshop.com</p>
                     </div>
                 </div>
 
@@ -43,12 +43,8 @@ const FooterLayout = () => {
                         DANH MỤC
                     </h3>
                     <ul className={`${isOpen.category ? 'block' : 'hidden'} md:block space-y-2`}>
-                        <li>Dụng cụ điện</li>
-                        <li>Thiết bị dùng pin</li>
-                        <li>Thiết bị nâng đỡ</li>
-                        <li>Thang nhôm</li>
-                        <li>Dụng cụ khí nén</li>
-                        <li>Máy rửa xe</li>
+                        <li>Điện thoại</li>
+                        <li>Laptop</li>
                     </ul>
                 </div>
 
@@ -61,12 +57,11 @@ const FooterLayout = () => {
                         HỖ TRỢ KHÁCH HÀNG
                     </h3>
                     <ul className={`${isOpen.support ? 'block' : 'hidden'} md:block space-y-2`}>
-                        <li>Quy trình thanh toán</li>
-                        <li>An toàn giao dịch</li>
-                        <li>Quản lý thông tin xấu</li>
-                        <li>Điều khoản áp dụng</li>
-                        <li>Chính sách thanh toán</li>
-                        <li>Hệ thống cửa hàng</li>
+                        <li>Hướng dẫn sử dụng</li>
+                        <li>Câu hỏi thường gặp</li>
+                        <li>Chính sách đổi trả</li>
+                        <li>Chính sách bảo mật</li>
+                        <li>Chăm sóc khách hàng</li>
                     </ul>
                 </div>
 
@@ -120,9 +115,10 @@ const FooterLayout = () => {
                 </div>
             </div>
             <div className="text-center text-sm mt-8">
-                © Bản quyền thuộc về ND Theme | Cung cấp bởi Sapo
+                © Bản quyền thuộc về Magic Shop | Cung cấp bởi FPT Polytechnic
             </div>
         </footer>
     );
 };
+
 export default FooterLayout;

@@ -113,22 +113,29 @@ class ProductController extends Controller
             'variants.*.color_id.exists' => 'Màu sắc không hợp lệ.',
             'variants.*.variant_price.gt' => 'Giá của biến thể phải lớn hơn 0.',
         ]);
-
+        $totalQuantity = 0;
+        if (!empty($validated['variants'])) {
+            foreach ($validated['variants'] as $variant) {
+                $totalQuantity += $variant['variant_quantity'];
+            }
+        }
         // Xử lý ảnh
         $images = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                $path = $image->store('uploads/products', 'public');
-                $images[] = $path;
+                $imageName = Str::random(40) . '.' . $image->getClientOriginalExtension();
+                $image->move(public_path('upload'), $imageName);
+                $images[] = 'upload/' . $imageName;
             }
         }
+        
 
         // Lưu sản phẩm chính
         $product = Product::create([
             'name' => $validated['name'],
             'price' => $validated['price'],
             'dis_price' => $validated['dis_price'],
-            'quantity' => $validated['quantity'],
+            'quantity' => $totalQuantity,
             'brand_id' => $validated['brand_id'],
             'category_id' => $validated['category_id'],
             'description' => $validated['description'],
@@ -220,27 +227,27 @@ class ProductController extends Controller
     
 
     $product = Product::findOrFail($id);
-
-    // Xử lý hình ảnh mới
-    $imagePaths = json_decode($product->images, true) ?? []; // Giải mã JSON từ cơ sở dữ liệu
-
-    if ($request->hasFile('images')) {
-        foreach ($request->file('images') as $image) {
-            // Tạo tên ảnh ngẫu nhiên
-            $imageName = Str::random(40) . '.' . $image->getClientOriginalExtension();
-    
-            // Lưu ảnh vào thư mục 'uploads/products' trong storage
-            $image->storeAs('public/uploads/products', $imageName);
-    
-            // Thêm đường dẫn ảnh mới vào mảng $imagePaths
-            $imagePaths[] = 'uploads/products/' . $imageName; // Đảm bảo là đường dẫn tương đối
+    $totalQuantity = 0;
+    if (!empty($validatedData['variants'])) {
+        foreach ($validatedData['variants'] as $variant) {
+            $totalQuantity += $variant['variant_quantity'];
         }
     }
     
-    
-    $validatedData['images'] = json_encode($imagePaths);
+    $imagePaths = json_decode($product->images, true) ?? []; // Giải mã JSON từ cơ sở dữ liệu
+
+    if ($request->hasFile('images')) {
+        $imagePaths = [];
+        foreach ($request->file('images') as $image) {
+            $imageName = Str::random(40) . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('upload'), $imageName);
+            $imagePaths[] = 'upload/' . $imageName;
+        }
+        $validatedData['images'] = json_encode($imagePaths);
+    }
 
     $product->update($validatedData);
+
 
     if ($request->has('removed_images')) {
         $removedImages = explode(',', rtrim($request->removed_images, ','));
@@ -248,14 +255,12 @@ class ProductController extends Controller
         foreach ($removedImages as $image) {
             if (($key = array_search($image, $imagePaths)) !== false) {
                 unset($imagePaths[$key]);
-                Storage::delete('public/upload/' . $image);
+                Storage::delete('public/upload' . $image);
             }
         }
     }
-
-    // Cập nhật lại trường images trong cơ sở dữ liệu
     $product->images = json_encode(array_values($imagePaths));
-    $product->save();
+    $product->save(['quantity' => $totalQuantity]);
 
     // Cập nhật variants
     DB::transaction(function () use ($product, $request) {
@@ -283,7 +288,7 @@ class ProductController extends Controller
         }
     });
 
-    return redirect()->route('admin.products.index')->with('success', 'Cập nhật sản phẩm "' . $product->name . '" thành công.');
+    return redirect()->back()->with('success', 'Cập nhật sản phẩm "' . $product->name . '" thành công.');
 }
 
     
@@ -337,5 +342,20 @@ class ProductController extends Controller
         }
 
         return response()->json(['success' => false, 'message' => 'Sản phẩm tìm thấy'], 404);
+    }
+
+    public function products() {
+        $products = Product::with(['category:id,name', 'brand:id,name', 'ratings'])->get();
+    $products = $products->map(function ($product) {
+        $product->average_rating = $product->ratings->avg('rating');
+        return $product;
+    });
+    $categories = Category::select('id', 'name')->get();
+    $brands = Brand::select('id', 'name')->get();
+    return Inertia::render('AllProduct', [
+        'products' => $products,
+        'categories' => $categories,
+        'brands' => $brands,
+    ]);
     }
 }

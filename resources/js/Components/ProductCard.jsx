@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Link } from '@inertiajs/inertia-react';
 import { Card, Button, message } from 'antd';
 import { HeartOutlined, ShoppingCartOutlined, EyeOutlined, EyeFilled } from '@ant-design/icons';
+import '../../css/abouts.css';
 
 const { Meta } = Card;
 
@@ -32,8 +33,9 @@ const handleAddToFavorites = async (productId) => {
 
 const ProductCard = ({ product }) => {
     const images = product.images ? JSON.parse(product.images) : [];
-    const imageUrl = images.length > 0 ? `/storage/${images[0]}` : null;
+    const imageUrl = images.length > 0 ? `/${images[0]}` : null;
     const productName = product.name || 'Sản phẩm không tên';
+    const price = typeof product.price === 'string' ? Number(product.price) : product.price;
 
     const productDescription = (() => {
         try {
@@ -71,7 +73,7 @@ const ProductCard = ({ product }) => {
                         <img alt={productName} src={imageUrl} className="product-image m-auto" />
                     </Link>
                 ) : (
-                    <div className="product-image-placeholder flex items-center justify-center bg-gray-200 h-48">
+                    <div className="product-image-placeholder flex items-center justify-center bg-gray-200">
                         <span className="text-gray-400">Không có ảnh</span>
                     </div>
                 )
@@ -108,16 +110,7 @@ const ProductCard = ({ product }) => {
                 description={
                     <>
                         <span className="product-name text-lg font-bold text-gray-900 ">{productName}</span>
-                        <div
-                            className="product-description text-sm text-gray-500 mb-2"
-                            dangerouslySetInnerHTML={{
-                                __html:
-                                    productDescription.length > 80
-                                        ? `${productDescription.substring(0, 60)}...`
-                                        : productDescription,
-                            }}
-                        />
-                        <p className="text-xl text-red-500 font-bold">
+                        <p className="text-2xl text-red-500 font-bold">
                             {product.dis_price ? (
                                 <>
                                     {new Intl.NumberFormat('vi-VN').format(product.dis_price)} đ
@@ -146,7 +139,7 @@ ProductCard.propTypes = {
         id: PropTypes.number.isRequired,
         name: PropTypes.string,
         description: PropTypes.string,
-        price: PropTypes.number,
+        price: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
         image: PropTypes.string,
         badgeText: PropTypes.string,
         installment: PropTypes.bool,

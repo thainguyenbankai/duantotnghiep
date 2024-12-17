@@ -6,7 +6,7 @@ import { MailOutlined, LockOutlined } from '@ant-design/icons';
 const { Title } = Typography;
 
 export default function Login({ status, canResetPassword }) {
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
         remember: false,
@@ -16,21 +16,26 @@ export default function Login({ status, canResetPassword }) {
         if (status) {
             message.success(status);
         }
-        if (errors) {
-            console.log(errors); 
-        }
-    }, [status, errors]);
+    }, [status]);
 
-
-    const submit = (e) => {
+    const submit = async (e) => {
         e.preventDefault();
+
         post(route('login'), {
+            onSuccess: (page) => {
+                if (page.props.flash?.message) {
+                    message.success(page.props.flash.message);
+                }
+            },
             onError: (errors) => {
-                message.error(errors.email || 'Đăng nhập không thành công. Vui lòng kiểm tra lại.');
+                if (errors?.email) {
+                    message.error(errors.email);
+                } else {
+                    message.error('Đăng nhập không thành công. Vui lòng kiểm tra lại.');
+                }
             },
         });
     };
-
 
     return (
         <>
@@ -41,7 +46,7 @@ export default function Login({ status, canResetPassword }) {
                 <Form layout="vertical" onSubmitCapture={submit}>
                     <Form.Item
                         label="Email"
-                        validateStatus={errors.email && "error"}
+                        validateStatus={errors.email ? "error" : ""}
                         help={errors.email}
                     >
                         <Input
@@ -52,10 +57,9 @@ export default function Login({ status, canResetPassword }) {
                             onChange={(e) => setData('email', e.target.value)}
                         />
                     </Form.Item>
-
                     <Form.Item
                         label="Mật Khẩu"
-                        validateStatus={errors.password && "error"}
+                        validateStatus={errors.password ? "error" : ""}
                         help={errors.password}
                     >
                         <Input.Password

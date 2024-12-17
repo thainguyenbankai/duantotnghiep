@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Select, Row, Col } from 'antd';
 import ProductCard from './ProductCard';
 const { Option } = Select;
+axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
 const CateProduct = ({ categories }) => {
     const [selectedBrand, setSelectedBrand] = useState('all');
     const filteredCategories = categories.map(category => {

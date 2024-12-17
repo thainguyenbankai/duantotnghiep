@@ -50,21 +50,21 @@ class RegisteredUserController extends Controller
         'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
     ]);
 
-    $verificationToken = Str::random(40);
+    $verification_code = Str::random(40);
     
-    $userData = [
+    $userData = User::create([
         'name' => $request->name,
         'email' => $request->email,
         'password' => Hash::make($request->password),
+        'verification_code' => $verification_code,
         'email_verified_at' => null,
-        'verification_code' => $verificationToken,
-    ];
+    ]);
 
-    $encryptedUserData = encrypt($userData);
-    Cookie::queue('user_data', $encryptedUserData, 60);
+    // $encryptedUserData = encrypt($userData);
+    // Cookie::queue('user_data', $encryptedUserData, 60);
     
     $verificationUrl = route('verification.verify', [
-        'token' => $verificationToken,
+        'token' => $verification_code,
         'email' => $request->email,
     ]);
 

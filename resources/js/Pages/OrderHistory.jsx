@@ -102,14 +102,14 @@ const OrderHistory = () => {
                 {formatDate(order.created_at)}
               </td>
               <td className="px-6 py-4">
-              <Button
-  type="danger"
-  className={`w-full mr-5 sm:w-auto ${order.name_status === "Giao Hàng Thành công" || order.name_status === "Đang lấy hàng" ? "bg-light-400 border-light-400 text-gray-600 hover:bg-light-400" : "bg-red-600 hover:bg-red-700 text-white border-red-600 border-2 hover:border-red-700"} transition-all duration-300 mb-2`}
-  onClick={() => cancelOrder(order.id)}
-  disabled={order.name_status === "Giao Hàng Thành công" || order.name_status === "Đang lấy hàng"}
->
-  Hủy đơn hàng
-</Button>
+                <Button
+                  type="danger"
+                  className={`w-full mr-5 sm:w-auto ${order.name_status === "Giao Hàng Thành công" || order.name_status === "Đang lấy hàng" ? "bg-light-400 border-light-400 text-gray-600 hover:bg-light-400" : "bg-red-600 hover:bg-red-700 text-white border-red-600 border-2 hover:border-red-700"} transition-all duration-300 mb-2`}
+                  onClick={() => cancelOrder(order.id)}
+                  disabled={order.name_status === "Giao Hàng Thành công" || order.name_status === "Đang lấy hàng"}
+                >
+                  Hủy đơn hàng
+                </Button>
 
 
                 {/* Remove duplicate product IDs using Set */}
